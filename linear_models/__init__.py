@@ -1,0 +1,2 @@
+from .heckmandg_linear import HeckmanDGBinaryLinearClassifier
+from .plain_linear import ProbitBinaryLinearClassifier
