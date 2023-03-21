@@ -2,28 +2,28 @@
 
 This repository is for the implementation of HeckmanDG on benchmark image data. We use the one-step optimization to train the Heckman DG model and the prediction network is composed of convolutional neural networks (CNN). We use the data-specific CNN structures recommended by our ICLR paper (reference here) and the WILDS paper (reference here). The current repo contains the code to run the experiment of Camelyon17 data.  
 
-##### Data Preparation
-We first need to download benchmark image data. 
-
-1. run download_wilds_data.py
+## Data Preparation
+We first need to download benchmark image data. Run download_wilds_data.py as follows:
 
 '''
 python download_wilds_data.py --root_dir ./data/benchmark/wilds
 '''
 
-##### Python libraries
-Please see Heckman.yaml (link here). We mainly use the Pytorch backend libraries.
+## Requirements
+Please see requirements.txt which presents the names and versions of all libraries that need to implement this repository. We mainly use the Pytorch backend libraries as follows:
+- torch==1.10.0
+- torchaudio==0.10.0
+- torchmetrics==0.11.1
+- torchvision==0.11.0
 
-##### main_heckmandg.py
+## Experiments
 1. Data Input: write arguments (hyperparameters)
 2. run Heckman DG
 3. result analysis
 
-'''
-python main-CNN-OneStep-Separated-HeckmanDG.py 
-'''
+python 2.run-cameloyon17-CNN-OneStep-HeckmanDG
 
-##### output
-1. trained model.
-2. learning curve (plots)
-3. experiment results.csv (prediction performances)
+
+## Outputs
+1. plots of training loss (learning curve).pdf and probits (histogram).pdf
+3. prediction results.csv
