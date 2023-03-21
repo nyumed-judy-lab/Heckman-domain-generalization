@@ -217,6 +217,200 @@ class HeckmanDGBinaryClassifier:
 
         return probits, labels
 
+class HeckmanDGBinaryClassifierCNN:
+    def __init__(self, args,
+                 network, optimizer, scheduler, 
+                 ):
+        self.args = args
+        self.network = network
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.network = self.network.to(self.args.device)
+
+    def fit(self, 
+            train_loader, 
+            valid_loader, 
+            ):
+        
+        self.train_loader = train_loader
+        self.valid_loader = valid_loader
+        
+        opt = self.optimizer(
+            [{'params': self.network.f_layers.parameters()},
+                {'params': self.network.g_layers.parameters()},
+                {'params': self.network.rho, 'lr': 1e-2, 'weight_decay': 0.}]
+        )
+        sch = self.scheduler(opt) if self.scheduler else None
+
+        train_loss_traj, valid_loss_traj = [], []
+        train_auc_traj, valid_auc_traj = [], []
+        rho_traj = []
+        best_model, best_loss, best_acc = deepcopy(self.network.state_dict()), 1e10, 0.
+        normal = torch.distributions.normal.Normal(0, 1)
+
+        pbar = tqdm(range(self.args.epochs))
+        for epoch in pbar:
+            self.network.train()
+            train_loss = 0.
+            train_pred, train_true = [], []
+            ##### train_dataloader
+            for b, batch in enumerate(self.train_loader):
+                print('train batch: ', b, f'/ {len(train_loader)}' )
+                
+                x = batch['x'].to(self.args.device).to(torch.float32)  # (B, *)
+                y = batch['y'].to(self.args.device).to(torch.float32)  # (B, *)
+                s_ = batch['domain'].to(self.args.device).to(torch.float32)  # (B, *)
+                
+                one_hot = np.zeros((self.args.batch_size, len(self.args.train_domains)))
+                col_idx = [np.where(int(s_[idx].item())  == np.array(self.args.train_domains))[0][0] for idx in range(len(s_))]
+                for i in range(len(one_hot)):
+                    one_hot[i,col_idx[i]] = 1
+                s = torch.Tensor(one_hot).to(self.args.device).to(torch.float32) # (B, *)
+
+ 
+                batch_probits = self.network(x) # shape(batch, output of f_layers+g_layers) , 
+                batch_prob = normal.cdf(batch_probits[:, 0]) # 0: f_layers
+
+                loss = 0.
+                for j in range(self.args.num_domains):
+                    joint_prob = bivariate_normal_cdf(batch_probits[:, 0], batch_probits[:, j + 1], self.network.rho[j])
+                    loss += -(y * s[:, j] * safe_log(joint_prob)).mean()
+                    loss += -((1 - y) * s[:, j] * safe_log(
+                        normal.cdf(batch_probits[:, j + 1]) - joint_prob)).mean()
+                    loss += -((1 - s[:, j]) * safe_log(normal.cdf(-batch_probits[:, j + 1]))).mean()
+
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+                self.network.rho.data = torch.clip(self.network.rho.data, -0.99, 0.99)
+
+                train_loss += loss.item() / len(self.train_loader)
+                train_pred.append(batch_prob.detach().cpu().numpy())
+                train_true.append(y.detach().cpu().numpy())
+
+            train_loss_traj.append(train_loss)
+            train_auc_traj.append(
+                roc_auc_score(
+                    np.concatenate(train_true),
+                    np.concatenate(train_pred)))
+
+            rho_traj.append(self.network.rho.data.detach().cpu().numpy())
+
+            if sch:
+                sch.step()
+
+            self.network.eval()
+            with torch.no_grad():
+                valid_loss = 0.
+                valid_pred, valid_true = [], []
+                ##### valid_dataloader
+                for b, batch in enumerate(self.valid_loader):
+                    print('valid batch: ', b, f'/ {len(valid_loader)}' )
+                
+                    x = batch['x'].to(self.args.device).to(torch.float32)  # (B, *)
+                    y = batch['y'].to(self.args.device).to(torch.float32)  # (B, *)
+                    s_ = batch['domain'].to(self.args.device).to(torch.float32)  # (B, *)
+
+                    one_hot = np.zeros((self.args.batch_size, len(self.args.train_domains)))
+                    col_idx = [np.where(int(s_[idx].item())  == np.array(self.args.train_domains))[0][0] for idx in range(len(s_))]
+                    for i in range(len(one_hot)):
+                        one_hot[i,col_idx[i]] = 1
+                    s = torch.Tensor(one_hot).to(self.args.device).to(torch.float32) # (B, *)
+
+                    batch_probits = self.network(x)
+                    batch_prob = normal.cdf(batch_probits[:, 0])
+
+                    loss = 0.
+                    for j in range(self.args.num_domains):
+                        joint_prob = bivariate_normal_cdf(batch_probits[:, 0], batch_probits[:, j+1], self.network.rho[j])
+                        loss += -(y * s[:, j] * safe_log(joint_prob)).mean()
+                        loss += -((1 - y) * s[:, j] * safe_log(normal.cdf(batch_probits[:, j+1]) - joint_prob)).mean()
+                        loss += -((1 - s[:, j]) * safe_log(1. - normal.cdf(batch_probits[:, j+1]))).mean()
+
+                    valid_loss += loss.item() / len(valid_loader)
+                    valid_pred.append(batch_prob.detach().cpu().numpy())
+                    valid_true.append(y.detach().cpu().numpy())
+
+            if valid_loss < best_loss:
+                best_model = deepcopy(self.network.state_dict())
+                best_loss = valid_loss
+                best_epoch = epoch
+
+            valid_loss_traj.append(valid_loss)
+            valid_auc_traj.append(
+                roc_auc_score(
+                    np.concatenate(valid_true),
+                    np.concatenate(valid_pred)))
+
+            desc = f'[{epoch + 1:03d}/{self.args.epochs}] '
+            desc += f'| train | Loss: {train_loss_traj[-1]:.4f} '
+            desc += f'AUROC: {train_auc_traj[-1]:.4f} '
+            desc += f'| valid | Loss: {valid_loss_traj[-1]:.4f} '
+            desc += f'AUROC: {valid_auc_traj[-1]:.4f} '
+            pbar.set_description(desc)
+
+        self.network.load_state_dict(best_model)
+        self.train_loss_traj = train_loss_traj
+        self.valid_loss_traj = valid_loss_traj
+        self.train_auc_traj = train_auc_traj
+        self.valid_auc_traj = valid_auc_traj
+        self.rho_traj = rho_traj
+        self.best_train_loss = train_loss_traj[best_epoch]
+        self.best_valid_loss = valid_loss_traj[best_epoch]
+        self.best_train_auc = train_auc_traj[best_epoch]
+        self.best_valid_auc = valid_auc_traj[best_epoch]
+        self.best_rho = rho_traj[best_epoch]
+        self.best_epoch = best_epoch
+
+    def predict_proba(self, batch):
+        normal = torch.distributions.normal.Normal(0, 1)
+        x = batch['x'].to(self.args.device).to(torch.float32)  # (B, *)
+        y = batch['y'].to(self.args.device).to(torch.float32)  # (B, *)
+        with torch.no_grad():
+            probs_batch = normal.cdf(self.network(x.to(self.args.device))[:, 0])
+        probs_batch = probs_batch.detach().cpu().numpy()
+        return probs_batch
+    
+    def predict_proba_loader(self, dataloader):
+        normal = torch.distributions.normal.Normal(0, 1)
+        probs_list=[]
+        for b, batch in enumerate(dataloader):
+            print('predict batch', b, f'/ {len(dataloader)}')
+            x = batch['x'].to(self.args.device).to(torch.float32)  # (B, *)
+            y = batch['y'].to(self.args.device).to(torch.float32)  # (B, *)
+            
+            with torch.no_grad():
+                probs_batch = normal.cdf(self.network(x.to(self.args.device))[:, 0])
+                probs_list.append(probs_batch)
+                
+        probs = torch.cat(probs_list).detach().cpu().numpy()
+
+        return probs
+
+    def get_selection_probit(self, dataloader):
+        self.network.eval()
+        probits_list = []
+        for b, batch in enumerate(dataloader):
+            print('get_selection_probit batch', b, f'/ {len(dataloader)}')
+            x = batch['x'].to(self.args.device).to(torch.float32)  # (B, *)
+            y = batch['y'].to(self.args.device).to(torch.float32)  # (B, *)
+            s_ = batch['domain'].to(self.args.device).to(torch.float32)  # (B, *)
+            one_hot = np.zeros((self.args.batch_size, len(self.args.train_domains)))
+            col_idx = [np.where(int(s_[idx].item())  == np.array(self.args.train_domains))[0][0] for idx in range(len(s_))]
+            for i in range(len(one_hot)):
+                one_hot[i,col_idx[i]] = 1
+            s = torch.Tensor(one_hot).to(self.args.device).to(torch.float32) # (B, *)
+            # s = torch.Tensor(one_hot).to(args.device).to(torch.float32) # (B, *)
+
+            with torch.no_grad():
+                probits_batch = self.network(x.to(self.args.device))[:, 1:] 
+                probits_list.append(probits_batch)
+                        
+        probits = torch.cat(probits_list).detach().cpu().numpy()
+        labels = s.argmax(1)
+        labels = labels.detach().cpu().numpy()
+        return probits, labels
+
 class TwoStepHeckmanDGBinaryClassifier:
     def __init__(self, network, optimizer, scheduler, config=dict()):
         self.network = network
@@ -331,11 +525,12 @@ class TwoStepHeckmanDGBinaryClassifier:
 
         dataloaders = dict()
         for split in ['train', 'valid']:
+            
             dataloaders[split] = DataLoader(
                 TensorDataset(
-                    torch.FloatTensor(data[f'{split}_x']),
-                    torch.FloatTensor(data[f'{split}_y']),
-                    torch.FloatTensor(data[f'{split}_s'])
+                    torch.FloatTensor(data[f'{split}_x']), # batch[0]
+                    torch.FloatTensor(data[f'{split}_y']), # batch[1]
+                    torch.FloatTensor(data[f'{split}_s']) # batch[2]
                 ),
                 shuffle=(split == 'train'), batch_size=self.config['batch_size'], drop_last=False
             )

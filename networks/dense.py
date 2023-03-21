@@ -68,7 +68,8 @@ class SeparatedHeckmanNetwork(nn.Module):
                  activation=default_activation,
                  dropout=default_dropout,
                  batchnorm=default_batchnorm,
-                 bias=default_bias):
+                 bias=default_bias
+                 ):
 
         super(SeparatedHeckmanNetwork, self).__init__()
         activation = getattr(nn, activation)

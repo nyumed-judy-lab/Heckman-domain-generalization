@@ -1,3 +1,3 @@
 from .heckmandg import TwoStepHeckmanDGBinaryClassifier
-from .heckmandg import HeckmanDGBinaryClassifier
+from .heckmandg import HeckmanDGBinaryClassifier, HeckmanDGBinaryClassifierCNN
 from .plain import ProbitBinaryClassifier
