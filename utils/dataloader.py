@@ -44,7 +44,7 @@ def dataloaders(args, dataset):
     eval_loader_configs = dict(
         batch_size=args.batch_size,
         shuffle=False,
-        drop_last=False,
+        drop_last=True,
         pin_memory=True,
         prefetch_factor=args.eval_prefetch_factor,
         num_workers=args.eval_num_workers,

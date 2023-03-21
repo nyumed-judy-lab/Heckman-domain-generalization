@@ -110,3 +110,6 @@ results.columns = ['data', 'train', 'valid', 'test']
 print(results)
 results.to_csv(f'./results/prediction/HeckmanDG_{args.data}.csv')
 
+"""
+python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
+"""
