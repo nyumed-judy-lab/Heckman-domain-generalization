@@ -58,7 +58,8 @@ python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
   - plots of the training loss (learning curve)[here](results/prediction/HeckmanDG_camelyon17.csv)
   - plots of the probits (histogram) [here](results/prediction/HeckmanDG_camelyon17.csv)
   - prediction results (AUC scores).csv [here](results/prediction/HeckmanDG_camelyon17.csv)
-images.githubusercontent.com/36376255/226866939-0c47c841-6220-4be8-8547-8d74fd7bb610.png)
+
+![image](https://user-images.githubusercontent.com/36376255/226869862-ee59176b-ea1f-4759-bc51-bb89a8423e36.png)
 
 ```
 
