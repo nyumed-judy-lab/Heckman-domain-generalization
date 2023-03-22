@@ -19,7 +19,7 @@ def fix_random_seed(s: int):
     torch.manual_seed(s)
     torch.cuda.manual_seed(s)
 
-#%% experiment environment
+#%% 1. Experiment Settings
 from utils_datasets.defaults import DataDefaults
 from utils.argparser import DatasetImporter, parse_arguments, args_cameloyn17_outcome
 from utils.dataloader import dataloaders, sub_dataloaders
@@ -40,7 +40,7 @@ args.test_domains = defaults.test_domains
 
 fix_random_seed(args.seed)    
 
-#%% Data
+#%% 2. Data Preparation
 # DatasetImporter: put DataDefaults into DatasetImporter to get the dataset
 dataset = DatasetImporter(defaults, args)
 
@@ -53,7 +53,7 @@ if True:
     train_loader, valid_loader, test_loader = sub_dataloaders(train_loader, valid_loader, test_loader)
 '''
 
-#%% training
+#%% 3. HeckmanDG
 from networks import SeparatedHeckmanNetworkCNN #SeparatedHeckmanNetwork, 
 from models import HeckmanDGBinaryClassifierCNN #HeckmanDGBinaryClassifier, 
 
@@ -63,7 +63,8 @@ scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gam
 model = HeckmanDGBinaryClassifierCNN(args, network, optimizer, scheduler)
 model.fit(train_loader, valid_loader)
 
-#%% plots: loss, probits
+#%% 4. Results Analysis
+# plots: loss, probits
 from utils.plots import plots_loss, plots_probit
 domain_color_map = {
     0: 'orange',
@@ -77,7 +78,7 @@ plots_loss(model, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args
 probits, labels = model.get_selection_probit(train_loader)
 plots_probit(probits, labels, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args.data}_probits.pdf")
 
-#%% prediction results
+# prediction results
 res_tr = []
 res_vl = []
 res_ts = []
@@ -85,21 +86,30 @@ for b, batch in enumerate(train_loader):
     print(f'train_loader {b} batch / {len(train_loader)}')
     y_true = batch['y']
     y_pred = model.predict_proba(batch)
-    score = roc_auc_score(y_true, y_pred)
-    res_tr.append(score)
+    try:
+        score = roc_auc_score(y_true, y_pred)
+        res_tr.append(score)
+    except ValueError:
+        pass
+
 for b, batch in enumerate(valid_loader):
     print(f'valid_loader {b} batch / {len(valid_loader)}')
     y_true = batch['y']
     y_pred = model.predict_proba(batch)
-    score = roc_auc_score(y_true, y_pred)
-    res_vl.append(score)
-
+    try:
+        score = roc_auc_score(y_true, y_pred)
+        res_vl.append(score)
+    except ValueError:
+        pass
 for b, batch in enumerate(test_loader):
     print(f'{b} batch / {len(test_loader)}')
     y_true = batch['y']
     y_pred = model.predict_proba(batch)
-    score = roc_auc_score(y_true, y_pred)
-    res_ts.append(score)
+    try:
+        score = roc_auc_score(y_true, y_pred)
+        res_ts.append(score)
+    except ValueError:
+        pass
     
 res_tr_mean = pd.DataFrame(res_tr).mean()
 res_vl_mean = pd.DataFrame(res_vl).mean()

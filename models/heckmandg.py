@@ -1,4 +1,3 @@
-
 import torch
 import numpy as np
 from torch.utils.data import TensorDataset
@@ -238,7 +237,7 @@ class HeckmanDGBinaryClassifierCNN:
         opt = self.optimizer(
             [{'params': self.network.f_layers.parameters()},
                 {'params': self.network.g_layers.parameters()},
-                {'params': self.network.rho, 'lr': 1e-2, 'weight_decay': 0.}]
+                {'params': self.network.rho, 'lr': self.args.lr, 'weight_decay': self.args.weight_decay}]
         )
         sch = self.scheduler(opt) if self.scheduler else None
 
