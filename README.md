@@ -61,7 +61,7 @@ python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
 # (2) run the experiment with a subset of data to test the implementation of HeckmanDG (take a small amount of memory)
 if True:
     train_loader, valid_loader, test_loader = sub_dataloaders(train_loader, valid_loader, test_loader)
-'''
+```
 
 3. HeckmanDG
 - Here, we initialize the network (CNN) and optimizer and run the Heckman DG model.
