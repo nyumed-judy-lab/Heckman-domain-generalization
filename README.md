@@ -68,10 +68,6 @@ if True:
 
 4. Result Analysis
 - The results of this code are as follows:
-- The results of this code are as foloows:
-  - plots of the training loss (learning curve)[here](results/plots/HeckmanDG_camelyon17_loss.pdf)
-  - plots of the probits (histogram) [here](results/plots/HeckmanDG_camelyon17_probits.pdf)
-  - prediction results (AUC scores).csv [here](results/prediction/HeckmanDG_camelyon17.csv)
-
-![image](https://user-images.githubusercontent.com/36376255/226869862-ee59176b-ea1f-4759-bc51-bb89a8423e36.png)
-
+  - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
+  - plots of the probits [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf)
+  - AUC scores [prediction results](results/prediction/HeckmanDG_camelyon17.csv)
