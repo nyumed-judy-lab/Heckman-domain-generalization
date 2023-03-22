@@ -1,6 +1,6 @@
 # image-benchmark-domain-generalization
 
-This repository provides the PyTorch implementation of Heckman DG on WILDS benchmark data. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selelction (g) and outcome (f) networks are composed of data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparaters of each data and model recommeded by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper and the WILDS paper (reference here). Please note that the current repository provised onyl the code to run the experiment of Camelyon17 data. The codes for other data will be added. 
+This repository provides the PyTorch implementation of Heckman DG on WILDS benchmark data. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper and the WILDS paper (reference here). Please note that the current repository provided only the code to run the experiment of Camelyon17 data. The codes for other data will be added. 
 
 ## References
 Please refer to the following papers to set hyperparameters and reproduce experiments on the WILDS benchmark.
@@ -10,7 +10,7 @@ Please refer to the following papers to set hyperparameters and reproduce experi
 - [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper: Kahng, H., Do, H., & Zhong, J. Domain Generalization via Heckman-type Selection Models. In The Eleventh International Conference on Learning Representations.
 
 ## 1. Installation
-Please see requirements.txt which presents the names and versions of all libraries that need to implement this repository. We mainly use the Pytorch backend libraries as follows:
+Please see requirements.txt, which presents the names and versions of all libraries that need to implement this repository. We mainly use the Pytorch backend libraries as follows:
 - torch==1.10.0
 - torchaudio==0.10.0
 - torchmetrics==0.11.1
@@ -32,8 +32,8 @@ We first need to download benchmark image (**WILDS**) data. Please run the follo
 
 python download_wilds_data.py --root_dir ./data/benchmark/wilds
 ```
-### WILDS bechmark
-WILDS bechmark include 4 datasets; Camelyon 17, PovertyMap, iWildCam, and RxRx1. Below is the details of each data.
+### WILDS benchmark
+WILDS benchmark includes four datasets; Camelyon 17, PovertyMap, iWildCam, and RxRx1. Below are the details of each data.
 - Camelyon17: Binary (tumor) classification.
 - PovertyMap: Regression (wealth index prediction).
 - iWildCam: multiclass (animal species) classification.
@@ -55,11 +55,10 @@ python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
 3. train the HeckmanDG model
 4. result analysis
 - The outputs of this code are the following results:
-  - plots of training loss (learning curve).pdf and probits (histogram).pdf
-  - plots of probits (histogram).pdf
-  - prediction results.csv
-	data	train	valid	test
-0	camelyon17	0.999451452	0.985454545	0.838709677![image](https://user-images.githubusercontent.com/36376255/226866939-0c47c841-6220-4be8-8547-8d74fd7bb610.png)
+  - plots of the training loss (learning curve)[here](results/prediction/HeckmanDG_camelyon17.csv)
+  - plots of the probits (histogram) [here](results/prediction/HeckmanDG_camelyon17.csv)
+  - prediction results (AUC scores).csv [here](results/prediction/HeckmanDG_camelyon17.csv)
+images.githubusercontent.com/36376255/226866939-0c47c841-6220-4be8-8547-8d74fd7bb610.png)
 
 ```
 
