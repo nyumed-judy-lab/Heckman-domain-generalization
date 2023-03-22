@@ -10,7 +10,7 @@ Please refer to the following papers to set hyperparameters and reproduce experi
 - [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper: Kahng, H., Do, H., & Zhong, J. Domain Generalization via Heckman-type Selection Models. In The Eleventh International Conference on Learning Representations.
 
 ## 1. Installation
-Please see requirements.txt, which presents the names and versions of all libraries that need to implement this repository. We mainly use the Pytorch backend libraries as follows:
+Please see requirements.txt, which presents the names and versions of all libraries that need to implement this repository. Please note that We mainly use the Pytorch backend libraries as follows:
 - torch==1.10.0
 - torchaudio==0.10.0
 - torchmetrics==0.11.1
@@ -49,19 +49,29 @@ please go to [code](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py) and run it as fo
 
 python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
 ```
+### Brief introduction of the code: four steps
 
-1. set experiment environment: write arguments (hyperparameters)
+1. Experiment Settings
+- Here, we set the name of data (camelyon17) and data-specific hyperparameters. The recommended data-specific hyperparameters are already set so if you want to see  . 
+
 2. Data Preparation
-3. train the HeckmanDG model
-4. result analysis
-- The outputs of this code are the following results:
-  - plots of the training loss (learning curve)[here](results/prediction/HeckmanDG_camelyon17.csv)
-  - plots of the probits (histogram) [here](results/prediction/HeckmanDG_camelyon17.csv)
+- The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
+
+```python
+# (2) run the experiment with a subset of data to test the implementation of HeckmanDG (take a small amount of memory)
+if True:
+    train_loader, valid_loader, test_loader = sub_dataloaders(train_loader, valid_loader, test_loader)
+'''
+
+3. HeckmanDG
+- Here, we initialize the network (CNN) and optimizer and run the Heckman DG model.
+
+4. Result Analysis
+- The results of this code are as follows:
+- The results of this code are as foloows:
+  - plots of the training loss (learning curve)[here](results/plots/HeckmanDG_camelyon17_loss.pdf)
+  - plots of the probits (histogram) [here](results/plots/HeckmanDG_camelyon17_probits.pdf)
   - prediction results (AUC scores).csv [here](results/prediction/HeckmanDG_camelyon17.csv)
 
 ![image](https://user-images.githubusercontent.com/36376255/226869862-ee59176b-ea1f-4759-bc51-bb89a8423e36.png)
 
-```
-
-
-```
