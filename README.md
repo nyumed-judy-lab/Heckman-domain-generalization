@@ -49,12 +49,13 @@ please go to [code](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py) and run it as fo
 
 python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
 ```
-### Brief introduction of the code: four steps
 
-1. Experiment Settings
-- Here, we set the name of data (camelyon17) and data-specific hyperparameters. The recommended data-specific hyperparameters are already set so if you want to see  . 
+### Brief introduction of the code: This code is composed of the following 4 steps.
 
-2. Data Preparation
+**1. Experiment Settings**
+- Here, we set the name of data (camelyon17) and data-specific hyperparameters. The recommended data-specific hyperparameters are already set, so if you want to see results with other settings, please modify the **ars** variable in the code. 
+
+**2. Data Preparation**
 - The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
 
 ```python
@@ -63,10 +64,10 @@ if True:
     train_loader, valid_loader, test_loader = sub_dataloaders(train_loader, valid_loader, test_loader)
 ```
 
-3. HeckmanDG
+**3. HeckmanDG**
 - Here, we initialize the network (CNN) and optimizer and run the Heckman DG model.
 
-4. Result Analysis
+**4. Result Analysis**
 - The results of this code are as follows:
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
   - plots of the probits [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf)
