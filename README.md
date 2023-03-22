@@ -42,21 +42,26 @@ WILDS bechmark include 4 datasets; Camelyon 17, PovertyMap, iWildCam, and RxRx1.
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
 ## 3.Experiments
+please go to [code](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py) and run it as follows:
+
 ```bash
 # Run Heckman DG on Camelyon17 data with (batch_size, 3, 96, 96) input image and binary outcome
 
 python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
 ```
 
-[code](image-benchmark-domain-generalization/2.run-cameloyon17-CNN-OneStep-HeckmanDG.py#section-name)
+1. set experiment environment: write arguments (hyperparameters)
+2. Data Preparation
+3. train the HeckmanDG model
+4. result analysis
+- The outputs of this code are the following results:
+  - plots of training loss (learning curve).pdf and probits (histogram).pdf
+  - plots of probits (histogram).pdf
+  - prediction results.csv
+	data	train	valid	test
+0	camelyon17	0.999451452	0.985454545	0.838709677![image](https://user-images.githubusercontent.com/36376255/226866939-0c47c841-6220-4be8-8547-8d74fd7bb610.png)
+
+```
 
 
-1. Data Input: write arguments (hyperparameters)
-2. run Heckman DG
-3. result analysis
-
-
-## 4. Outputs
-1. plots of training loss (learning curve).pdf and probits (histogram).pdf
-3. prediction results.csv
-
+```
