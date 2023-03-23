@@ -53,7 +53,29 @@ python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
 ### Brief introduction of the code: This code is composed of the following 4 steps.
 
 **1. Experiment Settings**
-- Here, we set the name of data (camelyon17) and data-specific hyperparameters. The recommended data-specific hyperparameters are already set, so if you want to see results with other settings, please modify the **ars** variable in the code. 
+- Here, we set the name of data (camelyon17) and data-specific hyperparameters. The recommended data-specific hyperparameters are already set, so if you want to see results with other settings, please modify the **args** variable in the [2.run-cameloyon17-CNN-OneStep-HeckmanDG.py](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py). 
+
+```python
+from utils_datasets.defaults import DataDefaults
+from utils.argparser import DatasetImporter, parse_arguments, args_cameloyn17_outcome
+from utils.dataloader import dataloaders, sub_dataloaders
+
+dataname = 'camelyon17'
+experiment_name = 'Heckman DG Benchmark'
+
+args = parse_arguments(experiment_name) # basic arguments for image data
+args = args_cameloyn17_outcome(args, experiment_name) # data-specific arguments 
+# DataDefaults: has data-specific hyperparameters
+defaults = DataDefaults[args.data]() 
+args.num_domains = len(defaults.train_domains)
+args.num_classes = defaults.num_classes
+args.loss_type = defaults.loss_type
+args.train_domains = defaults.train_domains
+args.validation_domains = defaults.validation_domains
+args.test_domains = defaults.test_domains
+
+fix_random_seed(args.seed)    
+```
 
 **2. Data Preparation**
 - The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
@@ -67,8 +89,76 @@ if True:
 **3. HeckmanDG**
 - Here, we initialize the network (CNN) and optimizer and run the Heckman DG model.
 
+```python
+from networks import SeparatedHeckmanNetworkCNN #SeparatedHeckmanNetwork, 
+from models import HeckmanDGBinaryClassifierCNN #HeckmanDGBinaryClassifier, 
+
+network = SeparatedHeckmanNetworkCNN(args)
+optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
+scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
+model = HeckmanDGBinaryClassifierCNN(args, network, optimizer, scheduler)
+model.fit(train_loader, valid_loader)
+```
+
 **4. Result Analysis**
 - The results of this code are as follows:
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
   - plots of the probits [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf)
   - AUC scores [prediction results](results/prediction/HeckmanDG_camelyon17.csv)
+```python
+# plots: loss, probits
+from utils.plots import plots_loss, plots_probit
+domain_color_map = {
+    0: 'orange',
+    1: 'slateblue',
+    2: 'navy',
+    3: 'crimson',
+    4: 'darkgreen',
+}
+
+plots_loss(model, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args.data}_loss.pdf")
+probits, labels = model.get_selection_probit(train_loader)
+plots_probit(probits, labels, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args.data}_probits.pdf")
+
+# prediction results
+res_tr = []
+res_vl = []
+res_ts = []
+for b, batch in enumerate(train_loader):
+    print(f'train_loader {b} batch / {len(train_loader)}')
+    y_true = batch['y']
+    y_pred = model.predict_proba(batch)
+    try:
+        score = roc_auc_score(y_true, y_pred)
+        res_tr.append(score)
+    except ValueError:
+        pass
+
+for b, batch in enumerate(valid_loader):
+    print(f'valid_loader {b} batch / {len(valid_loader)}')
+    y_true = batch['y']
+    y_pred = model.predict_proba(batch)
+    try:
+        score = roc_auc_score(y_true, y_pred)
+        res_vl.append(score)
+    except ValueError:
+        pass
+for b, batch in enumerate(test_loader):
+    print(f'{b} batch / {len(test_loader)}')
+    y_true = batch['y']
+    y_pred = model.predict_proba(batch)
+    try:
+        score = roc_auc_score(y_true, y_pred)
+        res_ts.append(score)
+    except ValueError:
+        pass
+    
+res_tr_mean = pd.DataFrame(res_tr).mean()
+res_vl_mean = pd.DataFrame(res_vl).mean()
+res_ts_mean = pd.DataFrame(res_ts).mean()
+
+results = pd.concat([pd.DataFrame([args.data]), res_tr_mean, res_vl_mean, res_ts_mean], axis=1)
+results.columns = ['data', 'train', 'valid', 'test']
+print(results)
+results.to_csv(f'./results/prediction/HeckmanDG_{args.data}.csv')
+```
