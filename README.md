@@ -105,6 +105,7 @@ model.fit(train_loader, valid_loader)
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
   - plots of the probits [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf)
   - AUC scores [prediction results](results/prediction/HeckmanDG_camelyon17.csv)
+
 ```python
 # plots: loss, probits
 from utils.plots import plots_loss, plots_probit
