@@ -28,9 +28,9 @@ conda install --file requirements.txt
 We first need to download benchmark image (**WILDS**) data. Please run the following code. 
 
 ``` bash
-# Run download_wilds_data.py
+# Run 1.download_wilds_data.py
 
-python download_wilds_data.py --root_dir ./data/benchmark/wilds
+python 1.download_wilds_data.py --root_dir ./data/benchmark/wilds
 ```
 ### WILDS benchmark
 WILDS benchmark includes four datasets; Camelyon 17, PovertyMap, iWildCam, and RxRx1. Below are the details of each data.
