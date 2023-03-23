@@ -42,7 +42,7 @@ WILDS benchmark includes four datasets; Camelyon 17, PovertyMap, iWildCam, and R
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
 ## 3.Experiments
-please go to [code](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py) and run it as follows:
+please go to [2.run-cameloyon17-CNN-OneStep-HeckmanDG.py](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py) and run it as follows:
 
 ```bash
 # Run Heckman DG on Camelyon17 data with (batch_size, 3, 96, 96) input image and binary outcome
