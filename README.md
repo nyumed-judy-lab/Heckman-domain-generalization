@@ -1,6 +1,6 @@
 # image-benchmark-domain-generalization
 
-This repository provides the PyTorch implementation of Heckman DG on WILDS benchmark data. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper and the WILDS paper (reference here). Please note that the current repository provided only the code to run the experiment of Camelyon17 data. The codes for other data will be added. 
+This repository provides the PyTorch implementation of Heckman DG on WILDS benchmark data. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper. Please note that the current repository provides only the code to run the experiment of Camelyon17 data. The codes for other data will be added. 
 
 ## References
 Please refer to the following papers to set hyperparameters and reproduce experiments on the WILDS benchmark.
