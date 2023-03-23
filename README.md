@@ -10,7 +10,7 @@ Please refer to the following papers to set hyperparameters and reproduce experi
 - [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper: Kahng, H., Do, H., & Zhong, J. Domain Generalization via Heckman-type Selection Models. In The Eleventh International Conference on Learning Representations.
 
 ## 1. Installation
-Please see [requirements.txt](requirements.txt), which presents the names and versions of all libraries that need to implement this repository. Please note that we mainly use the Pytorch backend libraries as follows:
+Please see [requirements.txt](requirements.txt). It presents the names and versions of all libraries that we have to install before the implementation of this repository. Please note that we mainly use the Pytorch backend libraries as follows:
 - torch==1.10.0
 - torchaudio==0.10.0
 - torchmetrics==0.11.1
@@ -25,7 +25,7 @@ conda install --file requirements.txt
 ```
 
 ## 2. Data Preparation
-We first need to download benchmark image (**WILDS**) data. Please run the following code. 
+We then need to download benchmark image (**WILDS**) data. Please run the following code. 
 
 ``` bash
 # Run 1.download_wilds_data.py
