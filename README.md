@@ -81,9 +81,17 @@ fix_random_seed(args.seed)
 - The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
 
 ```python
-# (2) run the experiment with a subset of data to test the implementation of HeckmanDG (take a small amount of memory)
+# DatasetImporter: put DataDefaults into DatasetImporter to get the dataset
+dataset = DatasetImporter(defaults, args)
+
+# (1) run the experiment with all data to test the implementation of HeckmanDG (take large amount of memory)
+train_loader, valid_loader, test_loader = dataloaders(args, dataset)
+
+'''
+# (2) run the experiment with subset of data to test the implementation of HeckmanDG (take small amount of memory)
 if True:
     train_loader, valid_loader, test_loader = sub_dataloaders(train_loader, valid_loader, test_loader)
+'''
 ```
 
 **3. HeckmanDG**
