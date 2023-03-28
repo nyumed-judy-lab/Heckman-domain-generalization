@@ -52,7 +52,7 @@ please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
 ```bash
 # Run Heckman DG on Camelyon17 data with (batch_size, 3, 96, 96) input image and binary outcome
 
-python 2.run-cameloyon17-CNN-OneStep-HeckmanDG.py
+python main_heckmandg.py.py
 ```
 
 ### Brief introduction of the code: This code is composed of the following 4 steps.
