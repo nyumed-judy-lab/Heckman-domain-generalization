@@ -24,7 +24,8 @@ from utils_datasets.defaults import DataDefaults
 from utils.argparser import DatasetImporter, parse_arguments, args_cameloyn17_outcome
 from utils.dataloader import dataloaders, sub_dataloaders
 
-dataname = 'camelyon17'
+data_name = 'camelyon17'
+data_type = 'image'
 experiment_name = 'Heckman DG Benchmark'
 
 args = parse_arguments(experiment_name) # basic arguments for image data
@@ -54,15 +55,24 @@ if True:
 '''
 
 #%% 3. HeckmanDG
-from networks import SeparatedHeckmanNetworkCNN #SeparatedHeckmanNetwork, 
-from models import HeckmanDGBinaryClassifierCNN #HeckmanDGBinaryClassifier, 
+from networks import SeparatedHeckmanNetwork, SeparatedHeckmanNetworkCNN # 
+from models import HeckmanDGBinaryClassifier, HeckmanDGBinaryClassifierCNN # 
 
-network = SeparatedHeckmanNetworkCNN(args)
-optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
-scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
-model = HeckmanDGBinaryClassifierCNN(args, network, optimizer, scheduler)
-model.fit(train_loader, valid_loader)
-
+if data_type == 'tabular':
+    # len(train_loader.dataset['x'].shape)>4
+    network = SeparatedHeckmanNetwork(args)
+    optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
+    scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
+    model = HeckmanDGBinaryClassifier(args, network, optimizer, scheduler)
+    model.fit(train_loader, valid_loader)
+elif data_type == 'image':
+    # len(train_loader.dataset['x'].shape)<4
+    network = SeparatedHeckmanNetworkCNN(args)
+    optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
+    scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
+    model = HeckmanDGBinaryClassifierCNN(args, network, optimizer, scheduler)
+    model.fit(train_loader, valid_loader)
+    
 #%% 4. Results Analysis
 # plots: loss, probits
 from utils.plots import plots_loss, plots_probit
@@ -91,7 +101,6 @@ for b, batch in enumerate(train_loader):
         res_tr.append(score)
     except ValueError:
         pass
-
 for b, batch in enumerate(valid_loader):
     print(f'valid_loader {b} batch / {len(valid_loader)}')
     y_true = batch['y']
