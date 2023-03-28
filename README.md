@@ -66,7 +66,24 @@ from utils.argparser import DatasetImporter, parse_arguments, args_cameloyn17_ou
 from utils.dataloader import dataloaders, sub_dataloaders
 
 data_name = 'camelyon17'
-data_type = 'image'
+data_type = 'image' # (# obs, # channels, width, height) -> each obs (image) -> (#channels, width, height)
+'''
+example of 1 image (channel: 3, w: 3, h: 3)
+
+#red channel
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+#blue channel
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+#green channel
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+'''
+data_type = 'tabular' # (# obs, # columns)
 experiment_name = 'Heckman DG Benchmark'
 
 args = parse_arguments(experiment_name) # basic arguments for image data
