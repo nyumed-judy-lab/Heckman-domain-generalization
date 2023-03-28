@@ -1,22 +1,30 @@
-# image-benchmark-domain-generalization
+# Heckman-domain-generalization
 <!-- 
-### ONE FILE for all datasets (and the readme.md file )
+data_type = 'tabular' # (# obs, # columns)
+experiment_name = 'Heckman DG Benchmark'
+args = parse_arguments(experiment_name) # basic arguments for image data
+args = args_cameloyn17_outcome(args, experiment_name) # data-specific arguments 
+# DataDefaults: has data-specific hyperparameters
+defaults = DataDefaults[args.data]() 
+args.num_domains = len(defaults.train_domains)
+args.num_classes = defaults.num_classes
+args.loss_type = defaults.loss_type
+args.train_domains = defaults.train_domains
+args.validation_domains = defaults.validation_domains
+args.test_domains = defaults.test_domains
+fix_random_seed(args.seed)    
 
-What is the input and output of each step?
-What is the shape of the data (image, tabular)
-
--->
-
-This repository provides the PyTorch implementation of Heckman DG on WILDS benchmark data. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper. Please note that the current repository provides only the code to run the experiment of Camelyon17 data. The codes for other data will be added. 
-
-<!-- 
 ## References
 Please refer to the following papers to set hyperparameters and reproduce experiments on the WILDS benchmark.
-
 - [WILDS](https://proceedings.mlr.press/v139/koh21a) paper: Koh, P. W., Sagawa, S., Marklund, H., Xie, S. M., Zhang, M., Balsubramani, A., ... & Liang, P. (2021, July). Wilds: A benchmark of in-the-wild distribution shifts. In International Conference on Machine Learning (pp. 5637-5664). PMLR.
-
 - [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper: Kahng, H., Do, H., & Zhong, J. Domain Generalization via Heckman-type Selection Models. In The Eleventh International Conference on Learning Representations.
+
+* ONE FILE for all datasets (and the readme.md file)
+* What is the input and output of each step?
+* What is the shape of the data (image, tabular)
 -->
+
+This repository provides the PyTorch implementation of Heckman DG. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of neural networks structures. For tabular datasets, we use the multi-layer NN. For image datasets, we use data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
 
 ## 1. Installation
 Please see [requirements.txt](requirements.txt). It presents the names and versions of all libraries that we have to install before the implementation of this repository. Please note that we mainly use the Pytorch backend libraries as follows:
@@ -34,13 +42,14 @@ conda install --file requirements.txt
 ```
 
 ## 2. Data Preparation
-We then need to download benchmark image (**WILDS**) data. Please run the following code. 
+Please put your data in [data](data). If you want to apply **structured (tabular)** data, Please put your data in [data](data). If you want to apply **WILDS** benchmark, please run the following code. 
 
 ``` bash
-# Run 1.download_wilds_data.py
+# Run download_wilds_data.py
 
-python 1.download_wilds_data.py --root_dir ./data/benchmark/wilds
+python download_wilds_data.py --root_dir ./data/benchmark/wilds
 ```
+
 ### WILDS benchmark
 WILDS benchmark includes four datasets; Camelyon 17, PovertyMap, iWildCam, and RxRx1. Below are the details of each data.
 - Camelyon17: Binary (tumor) classification.
@@ -51,61 +60,48 @@ WILDS benchmark includes four datasets; Camelyon 17, PovertyMap, iWildCam, and R
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
 ## 3.Experiments
-please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
+Please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
 
 ```bash
-# Run Heckman DG on Camelyon17 data with (batch_size, 3, 96, 96) input image and binary outcome
+# Run Heckman DG on your data
 
-python main_heckmandg.py.py
+python main_heckmandg.py --data_name [your data]
 ```
 
-### Brief introduction of the code: This code is composed of the following 4 steps.
+### The experiment is composed of the following 4 steps.
 
 **1. Experiment Settings**
-- Here, we set the name of data (camelyon17) and data-specific hyperparameters. The recommended data-specific hyperparameters are already set, so if you want to see results with other settings, please modify the **args** variable in the [2.run-cameloyon17-CNN-OneStep-HeckmanDG.py](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py). 
+- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image). and hyperparameters. 
+- 
+- Hyperparameters: learning rate, weight decay, 
+Please note that ecommended data-specific hyperparameters are already set, so if you want to see results with other settings, please modify the **args** variable in the [main_heckmandg.py](main_heckmandg.py). 
 
-```python
-from utils_datasets.defaults import DataDefaults
-from utils.argparser import DatasetImporter, parse_arguments, args_cameloyn17_outcome
-from utils.dataloader import dataloaders, sub_dataloaders
-
-data_name = 'camelyon17'
-data_type = 'image' # (# obs, # channels, width, height) -> each obs (image) -> (#channels, width, height)
-'''
-example of 1 image (channel: 3, w: 3, h: 3)
-
-#red channel
-[[10, 10, 10],
-[10, 10, 10],
-[10, 10, 10],]
-#blue channel
-[[10, 10, 10],
-[10, 10, 10],
-[10, 10, 10],]
-#green channel
-[[10, 10, 10],
-[10, 10, 10],
-[10, 10, 10],]
-'''
-data_type = 'tabular' # (# obs, # columns)
-experiment_name = 'Heckman DG Benchmark'
-
-args = parse_arguments(experiment_name) # basic arguments for image data
-args = args_cameloyn17_outcome(args, experiment_name) # data-specific arguments 
-# DataDefaults: has data-specific hyperparameters
-defaults = DataDefaults[args.data]() 
-args.num_domains = len(defaults.train_domains)
-args.num_classes = defaults.num_classes
-args.loss_type = defaults.loss_type
-args.train_domains = defaults.train_domains
-args.validation_domains = defaults.validation_domains
-args.test_domains = defaults.test_domains
-
-fix_random_seed(args.seed)    
-```
 
 **2. Data Preparation**
 - The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
+##### Shape of input data
+- Shape of the structured data (tabular): (# observations, # variables)
+- Shape of the unstructured data (image): (# observations, # channels, width, height)
+    - We use Pytorch **data_loader** that can put subset (minibatch) of data to the model In the training process, so the data shape would be (# batch_size, # channels, width, height).
+    - each obs (image) -> (#channels, width, height)
+
+```bash
+# This is the exaple of each image that has the 3-dimensional matrix (# channel: 3, # width: 3, # height: 3).
+
+# red channel
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+# green channel
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+# blue channel
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+
+```
 
 ```python
 # DatasetImporter: put DataDefaults into DatasetImporter to get the dataset
@@ -123,6 +119,10 @@ if True:
 
 **3. HeckmanDG**
 - Here, we initialize the network (CNN) and optimizer and run the Heckman DG model.
+
+For the tabular data, you need to call the SeparatedHeckmanNetwork.
+
+##### what functions for what
 
 ```python
 from networks import SeparatedHeckmanNetwork, SeparatedHeckmanNetworkCNN # 
