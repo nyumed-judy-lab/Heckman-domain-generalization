@@ -47,7 +47,7 @@ WILDS benchmark includes four datasets; Camelyon 17, PovertyMap, iWildCam, and R
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
 ## 3.Experiments
-please go to [2.run-cameloyon17-CNN-OneStep-HeckmanDG.py](2.run-cameloyon17-CNN-OneStep-HeckmanDG.py) and run it as follows:
+please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
 
 ```bash
 # Run Heckman DG on Camelyon17 data with (batch_size, 3, 96, 96) input image and binary outcome
@@ -65,7 +65,8 @@ from utils_datasets.defaults import DataDefaults
 from utils.argparser import DatasetImporter, parse_arguments, args_cameloyn17_outcome
 from utils.dataloader import dataloaders, sub_dataloaders
 
-dataname = 'camelyon17'
+data_name = 'camelyon17'
+data_type = 'image'
 experiment_name = 'Heckman DG Benchmark'
 
 args = parse_arguments(experiment_name) # basic arguments for image data
@@ -103,14 +104,23 @@ if True:
 - Here, we initialize the network (CNN) and optimizer and run the Heckman DG model.
 
 ```python
-from networks import SeparatedHeckmanNetworkCNN #SeparatedHeckmanNetwork, 
-from models import HeckmanDGBinaryClassifierCNN #HeckmanDGBinaryClassifier, 
+from networks import SeparatedHeckmanNetwork, SeparatedHeckmanNetworkCNN # 
+from models import HeckmanDGBinaryClassifier, HeckmanDGBinaryClassifierCNN # 
 
-network = SeparatedHeckmanNetworkCNN(args)
-optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
-scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
-model = HeckmanDGBinaryClassifierCNN(args, network, optimizer, scheduler)
-model.fit(train_loader, valid_loader)
+if data_type == 'tabular':
+    # len(train_loader.dataset['x'].shape)>4
+    network = SeparatedHeckmanNetwork(args)
+    optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
+    scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
+    model = HeckmanDGBinaryClassifier(args, network, optimizer, scheduler)
+    model.fit(train_loader, valid_loader)
+elif data_type == 'image':
+    # len(train_loader.dataset['x'].shape)<4
+    network = SeparatedHeckmanNetworkCNN(args)
+    optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
+    scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
+    model = HeckmanDGBinaryClassifierCNN(args, network, optimizer, scheduler)
+    model.fit(train_loader, valid_loader)
 ```
 
 **4. Result Analysis**
