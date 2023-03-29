@@ -118,9 +118,13 @@ if True:
 ```
 
 **3. HeckmanDG**
-- Here, we initialize the network (CNN) and optimizer and run the Heckman DG model.
+- Here, we initialize the neural networks (NNs) and run the Heckman DG model. For the intiv
 
-For the tabular data, you need to call the SeparatedHeckmanNetwork.
+##### Tabular Data: **HeckmanMLP** 
+- For the tabular data, you need to import the **HeckmanMPL** function. The **HeckmanMPL** contains Multi-Layer Perceptrons (MLP; which means the plain neural networks consising of multiple layers and ). You can put int the n
+
+##### Image Data: **HeckmanCNN**. 
+For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains Multi-Layer Perceptrons (MLP; which means the plain neural networks consising of multiple layers and ). You can put int the n
 
 ##### what functions for what
 
