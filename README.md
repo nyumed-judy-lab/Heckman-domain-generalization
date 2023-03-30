@@ -42,22 +42,49 @@ conda install --file requirements.txt
 ```
 
 ## 2. Data Preparation
-Please put your data in [data](data). If you want to apply **structured (tabular)** data, Please put your data in [data](data). If you want to apply **WILDS** benchmark, please run the following code. 
+Please put your data in [data](data). If you want to apply **structured (tabular)** data, please put your data in [data](data). If you want to use **WILDS** benchmark, please run the following code to download it on [wilds](data/benchmark/wilds). 
 
 ``` bash
 # Run download_wilds_data.py
-
 python download_wilds_data.py --root_dir ./data/benchmark/wilds
 ```
+### **Data Preprocessing**
+#### To input the Tabular data
+This repository provides the functions that can perform the standardization and the imputation. Standardization makes the mean and standard deviation of data to 0 and 1. The missing value imputation replance 
 
-### WILDS benchmark
-WILDS benchmark includes four datasets; Camelyon 17, PovertyMap, iWildCam, and RxRx1. Below are the details of each data.
+- standard normalization: '
+- missing value imputation:
+
+In the experiment of this reprository, for the normalization and imputatation, the **Scaler** and **Imputer** is fitted on training data, and transform training, validatoin, and testing data. 
+
+#### To input the WILDS benchmark, this reposo the normalization 
+This repository provides for main prediction tasks, including binary classification (Camelyon17), multicalss classification(iWildCam, RxRx1), and regression (PovertyMap), on WILDS benchmark data as follows:
 - Camelyon17: Binary (tumor) classification.
-- PovertyMap: Regression (wealth index prediction).
 - iWildCam: multiclass (animal species) classification.
 - RxRx1: multiclass (genetic treatments) classification.
+- PovertyMap: Regression (wealth index prediction).
+
+In addition, this repository provides the data-specific normalization and augmentation functions as follows:
+- Camelyon17: N/A
+- PovertyMap: Color jittering
+- iWildCam: RandAugment
+- RxRx1: RandAugment
+
+### WILDS benchmark
 
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+
+![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+
+#### With your own data
+- To input the your own tabular data, please call the function **StandardScaler** to normlize the data and call the function **SimpleImputer(strategy='mean')** to missing value imputation (you can change the stratefy 'median', 'most_frequent', 'constant'). 
+    - If “mean”, then replace missing values using the mean along each column. Can only be used with numeric data.
+    - If “median”, then replace missing values using the median along each column. Can only be used with numeric data.
+    - If “most_frequent”, then replace missing using the most frequent value along each column. Can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
+    - If “constant”, then replace missing values with fill_value. Can be used with strings or numeric data.
+
+- To input your own image data, you can need to cust
+
 
 ## 3.Experiments
 Please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
@@ -71,14 +98,13 @@ python main_heckmandg.py --data_name [your data]
 ### The experiment is composed of the following 4 steps.
 
 **1. Experiment Settings**
-- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image). and hyperparameters. 
-- 
-- Hyperparameters: learning rate, weight decay, 
-Please note that ecommended data-specific hyperparameters are already set, so if you want to see results with other settings, please modify the **args** variable in the [main_heckmandg.py](main_heckmandg.py). 
-
+- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [main_heckmandg.py](main_heckmandg.py). 
 
 **2. Data Preparation**
+- You can import data
+
 - The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
+
 ##### Shape of input data
 - Shape of the structured data (tabular): (# observations, # variables)
 - Shape of the unstructured data (image): (# observations, # channels, width, height)
@@ -86,6 +112,8 @@ Please note that ecommended data-specific hyperparameters are already set, so if
     - each obs (image) -> (#channels, width, height)
 
 ```bash
+# This is the example of tabular data (# channel: 3, # width: 3, # height: 3).
+
 # This is the exaple of each image that has the 3-dimensional matrix (# channel: 3, # width: 3, # height: 3).
 
 # red channel
