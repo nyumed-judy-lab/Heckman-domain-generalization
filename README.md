@@ -113,6 +113,10 @@ python main_heckmandg.py --data_name [your data]
 
 ```bash
 # This is the example of tabular data (# channel: 3, # width: 3, # height: 3).
+# red channel
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
 
 # This is the exaple of each image that has the 3-dimensional matrix (# channel: 3, # width: 3, # height: 3).
 
