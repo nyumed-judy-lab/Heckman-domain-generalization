@@ -1,19 +1,5 @@
 # Heckman-domain-generalization
 <!-- 
-data_type = 'tabular' # (# obs, # columns)
-experiment_name = 'Heckman DG Benchmark'
-args = parse_arguments(experiment_name) # basic arguments for image data
-args = args_cameloyn17_outcome(args, experiment_name) # data-specific arguments 
-# DataDefaults: has data-specific hyperparameters
-defaults = DataDefaults[args.data]() 
-args.num_domains = len(defaults.train_domains)
-args.num_classes = defaults.num_classes
-args.loss_type = defaults.loss_type
-args.train_domains = defaults.train_domains
-args.validation_domains = defaults.validation_domains
-args.test_domains = defaults.test_domains
-fix_random_seed(args.seed)    
-
 ## References
 Please refer to the following papers to set hyperparameters and reproduce experiments on the WILDS benchmark.
 - [WILDS](https://proceedings.mlr.press/v139/koh21a) paper: Koh, P. W., Sagawa, S., Marklund, H., Xie, S. M., Zhang, M., Balsubramani, A., ... & Liang, P. (2021, July). Wilds: A benchmark of in-the-wild distribution shifts. In International Conference on Machine Learning (pp. 5637-5664). PMLR.
@@ -22,6 +8,7 @@ Please refer to the following papers to set hyperparameters and reproduce experi
 * ONE FILE for all datasets (and the readme.md file)
 * What is the input and output of each step?
 * What is the shape of the data (image, tabular)
+* what functions for what
 -->
 
 This repository provides the PyTorch implementation of Heckman DG. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of neural networks structures. For tabular datasets, we use the multi-layer NN. For image datasets, we use data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
@@ -48,21 +35,90 @@ Please put your data in [data](data). If you want to apply **structured (tabular
 # Run download_wilds_data.py
 python download_wilds_data.py --root_dir ./data/benchmark/wilds
 ```
-### **Data Preprocessing**
-#### To input the Tabular data
+
+## 3.Experiments
+Please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
+
+```bash
+# Run Heckman DG on your data
+
+python main_heckmandg.py --data_name [your data]
+```
+
+The experiment is composed of the following 4 steps; (1) Experiment Settings, (2) Data Preprocessing, (3) Heckman DG, (4) Result Analysis.
+
+**1. Experiment Settings**
+- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [main_heckmandg.py](main_heckmandg.py). 
+
+
+ ```python
+def args_cameloyn17(args, experiment_name):
+    args.data = 'camelyon17'
+    args.backbone = 'densenet121'
+    args.experiment_name = experiment_name
+    args.batch_size = 32
+    args.eval_batch_size = 32
+    args.epochs = 5
+    args.optimizer = 'sgd'
+    args.lr = 0.001
+    args.weight_decay = 0.00001 
+    args.pretrained = True 
+    args.device = 'cuda'
+    return args
+```
+
+**2. Data Preprocessing**
+This repository provides HeckmanDG for two data types including (1) tabular, (2) image data.
+**Tabular data** re
+
+**Shape of the structured data (tabular): (# observations, # variables)**
+```bash
+# This is the example of tabular data (# observation: 3, # variables: 3)
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+```
+
+
+
+**Image data** refers to damage data refers to data that is represented in the form of images or pictures. Images are made up of pixels, each of which has a numerical value that represents its color or intensity. Image data is structured in a 2D or 3D format, with pixels arranged in rows and columns. The **2D format** refers to an image that has two dimensions: (height and width). These dimensions define the size and shape of the image, and the pixels that make up the image are arranged in a rectangular grid with rows and columns. The **3D format**, on the other hand, refers to an image that has three dimensions: height, width, and depth (the number of channels; e.g. 3 if the channels are composed of Red, Green, and Blue). 
+
+Shape of the unstructured data (image): (# observations, # channels, width, height) and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height).
+
+
+**IMAGE**: The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
+
+The **args** contains the name of data, backbone, and hyperparameters (learning rate, etc.). For the WILDS data, the data-specific arguments are already set.
+
+### **Preprocessing of Tabular data**
 This repository provides the functions that can perform the standardization and the imputation. Standardization makes the mean and standard deviation of data to 0 and 1. The missing value imputation replance 
 
 - standard normalization: '
 - missing value imputation:
 
-In the experiment of this reprository, for the normalization and imputatation, the **Scaler** and **Imputer** is fitted on training data, and transform training, validatoin, and testing data. 
+* In the experiment of this reprository, for the normalization and imputatation, the **Scaler** and **Imputer** is fitted on training data, and transform training, validatoin, and testing data. 
 
-#### To input the WILDS benchmark, this reposo the normalization 
-This repository provides for main prediction tasks, including binary classification (Camelyon17), multicalss classification(iWildCam, RxRx1), and regression (PovertyMap), on WILDS benchmark data as follows:
+- To input the your own tabular data, please call the function **StandardScaler** to normlize the data and call the function **SimpleImputer(strategy='mean')** to missing value imputation (you can change the stratefy 'median', 'most_frequent', 'constant'). 
+    - If “mean”, then replace missing values using the mean along each column. Can only be used with numeric data.
+    - If “median”, then replace missing values using the median along each column. Can only be used with numeric data.
+    - If “most_frequent”, then replace missing using the most frequent value along each column. Can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
+    - If “constant”, then replace missing values with fill_value. Can be used with strings or numeric data.
+
+
+
+
+### **Preprocessing of Image (WILDS benchmark) data** 
+
+**Data Normalizstion**
+ImageNet
+
+**Data Augmentation**
+
+**Three prediction tasks**: (1) binary classification (Camelyon17), (2) multicalss classification(iWildCam, RxRx1), and regression (PovertyMap), on WILDS benchmark data as follows:
 - Camelyon17: Binary (tumor) classification.
-- iWildCam: multiclass (animal species) classification.
-- RxRx1: multiclass (genetic treatments) classification.
-- PovertyMap: Regression (wealth index prediction).
+- iWildCam: multiclass (animal species) classification. (In preparaion)
+- RxRx1: multiclass (genetic treatments) classification. (In preparaion)
+- PovertyMap: Regression (wealth index prediction). (In preparaion)
 
 In addition, this repository provides the data-specific normalization and augmentation functions as follows:
 - Camelyon17: N/A
@@ -80,76 +136,9 @@ Summary on the four datasets from WILDS benchmark.
 This figure represent hyperparameters of two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
 
 #### With your own data
-- To input the your own tabular data, please call the function **StandardScaler** to normlize the data and call the function **SimpleImputer(strategy='mean')** to missing value imputation (you can change the stratefy 'median', 'most_frequent', 'constant'). 
-    - If “mean”, then replace missing values using the mean along each column. Can only be used with numeric data.
-    - If “median”, then replace missing values using the median along each column. Can only be used with numeric data.
-    - If “most_frequent”, then replace missing using the most frequent value along each column. Can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
-    - If “constant”, then replace missing values with fill_value. Can be used with strings or numeric data.
 
 - To input your own image data, you need to customize the preprocessing code in the 
 
-
-## 3.Experiments
-Please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
-
-```bash
-# Run Heckman DG on your data
-
-python main_heckmandg.py --data_name [your data]
-```
-
-### The experiment is composed of the following 4 steps.
-
-**1. Experiment Settings**
-- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [main_heckmandg.py](main_heckmandg.py). 
-
-**2. Data Preparation**
-- You can import data
-
-- The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
-
-##### Shape of input data
-- Shape of the structured data (tabular): (# observations, # variables)
-- Shape of the unstructured data (image): (# observations, # channels, width, height)
-    - We use Pytorch **data_loader** that can put subset (minibatch) of data to the model In the training process, so the data shape would be (# batch_size, # channels, width, height).
-    - each obs (image) -> (#channels, width, height)
-
-```bash
-# This is the example of tabular data (# observation: 3, # variables: 3)
-[[10, 10, 10],
-[10, 10, 10],
-[10, 10, 10],]
-
-# This is the example of image data. Each observation has the 3-dimensional tensor (# channel: 3, # width: 3, # height: 3).
-
-# red channel
-[[10, 10, 10],
-[10, 10, 10],
-[10, 10, 10],]
-# green channel
-[[10, 10, 10],
-[10, 10, 10],
-[10, 10, 10],]
-# blue channel
-[[10, 10, 10],
-[10, 10, 10],
-[10, 10, 10],]
-
-```
-
-```python
-# DatasetImporter: put DataDefaults into DatasetImporter to get the dataset
-dataset = DatasetImporter(defaults, args)
-
-# (1) run the experiment with all data to test the implementation of HeckmanDG (take large amount of memory)
-train_loader, valid_loader, test_loader = dataloaders(args, dataset)
-
-'''
-# (2) run the experiment with subset of data to test the implementation of HeckmanDG (take small amount of memory)
-if True:
-    train_loader, valid_loader, test_loader = sub_dataloaders(train_loader, valid_loader, test_loader)
-'''
-```
 
 **3. HeckmanDG**
 - Here, we initialize the neural networks (NNs) and run the Heckman DG model. We use deep neural networks (DNNs; a.k.a. multi-layer perceptron) and convolutional nerual netoworks (CNNs) for the tabular data and image data, respectively.
@@ -165,37 +154,13 @@ network = HeckmanDNN([tr_x.shape[1], 128, 64, 32, 1],
                      activation='ReLU')
 ```
 
-neural netowrks consisting of multiple nodes and layers.  
  - **Tabular data** is a specific form of structured data that is organized into rows and columns, like a spreadsheet. Each row in a table represents a single record, while each column represents a specific attribute or variable associated with that record.
 
 
 
 ##### Image Data: **HeckmanCNN**. 
-For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains Multi-Layer Perceptrons (MLP; which means the plain neural networks consising of multiple layers and ). You can put int the n
-- **Image data** refers to damage data refers to data that is represented in the form of images or pictures. Images are made up of pixels, each of which has a numerical value that represents its color or intensity. Image data is structured in a 2D or 3D format, with pixels arranged in rows and columns. The **2D format** refers to an image that has two dimensions: (height and width). These dimensions define the size and shape of the image, and the pixels that make up the image are arranged in a rectangular grid with rows and columns. The **3D format**, on the other hand, refers to an image that has three dimensions: height, width, and depth (the number of channels; e.g. 3 if the channels are composed of Red, Green, and Blue). 
+For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains various CNN structures. The input of this **HeckmanCNN** is the arguments named **args**. 
 
-
-##### what functions for what
-
-```python
-from networks import SeparatedHeckmanNetwork, SeparatedHeckmanNetworkCNN # 
-from models import HeckmanDGBinaryClassifier, HeckmanDGBinaryClassifierCNN # 
-
-if data_type == 'tabular':
-    # len(train_loader.dataset['x'].shape)>4
-    network = SeparatedHeckmanNetwork(args)
-    optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
-    scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
-    model = HeckmanDGBinaryClassifier(args, network, optimizer, scheduler)
-    model.fit(train_loader, valid_loader)
-elif data_type == 'image':
-    # len(train_loader.dataset['x'].shape)<4
-    network = SeparatedHeckmanNetworkCNN(args)
-    optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
-    scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
-    model = HeckmanDGBinaryClassifierCNN(args, network, optimizer, scheduler)
-    model.fit(train_loader, valid_loader)
-```
 
 **4. Result Analysis**
 - The results of this code are as follows:
