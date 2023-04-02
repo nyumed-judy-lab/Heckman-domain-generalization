@@ -74,6 +74,8 @@ In addition, this repository provides the data-specific normalization and augmen
 
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
+<img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
+
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
 #### With your own data
@@ -188,61 +190,9 @@ elif data_type == 'image':
  
  ##### what is the training, valid data, loss axis, etc.
  
- 
-```python
-# plots: loss, probits
-from utils.plots import plots_loss, plots_probit
-domain_color_map = {
-    0: 'orange',
-    1: 'slateblue',
-    2: 'navy',
-    3: 'crimson',
-    4: 'darkgreen',
-}
-
+- From the function of **plots_loss**, we can see the [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
+- From the function of **plots_probit**, we can see the [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf) that represents the distribution of probits for each domain. To yeild the probits, we first need to model.get_selection_probit
 plots_loss(model, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args.data}_loss.pdf")
 probits, labels = model.get_selection_probit(train_loader)
 plots_probit(probits, labels, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args.data}_probits.pdf")
 
-# prediction results
-res_tr = []
-res_vl = []
-res_ts = []
-for b, batch in enumerate(train_loader):
-    print(f'train_loader {b} batch / {len(train_loader)}')
-    y_true = batch['y']
-    y_pred = model.predict_proba(batch)
-    try:
-        score = roc_auc_score(y_true, y_pred)
-        res_tr.append(score)
-    except ValueError:
-        pass
-
-for b, batch in enumerate(valid_loader):
-    print(f'valid_loader {b} batch / {len(valid_loader)}')
-    y_true = batch['y']
-    y_pred = model.predict_proba(batch)
-    try:
-        score = roc_auc_score(y_true, y_pred)
-        res_vl.append(score)
-    except ValueError:
-        pass
-for b, batch in enumerate(test_loader):
-    print(f'{b} batch / {len(test_loader)}')
-    y_true = batch['y']
-    y_pred = model.predict_proba(batch)
-    try:
-        score = roc_auc_score(y_true, y_pred)
-        res_ts.append(score)
-    except ValueError:
-        pass
-    
-res_tr_mean = pd.DataFrame(res_tr).mean()
-res_vl_mean = pd.DataFrame(res_vl).mean()
-res_ts_mean = pd.DataFrame(res_ts).mean()
-
-results = pd.concat([pd.DataFrame([args.data]), res_tr_mean, res_vl_mean, res_ts_mean], axis=1)
-results.columns = ['data', 'train', 'valid', 'test']
-print(results)
-results.to_csv(f'./results/prediction/HeckmanDG_{args.data}.csv')
-```
