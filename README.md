@@ -72,11 +72,12 @@ In addition, this repository provides the data-specific normalization and augmen
 
 ### WILDS benchmark
 
+Summary on the four datasets from WILDS benchmark. 
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
 <img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
 
-![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+This figure represent hyperparameters of two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
 
 #### With your own data
 - To input the your own tabular data, please call the function **StandardScaler** to normlize the data and call the function **SimpleImputer(strategy='mean')** to missing value imputation (you can change the stratefy 'median', 'most_frequent', 'constant'). 
@@ -85,7 +86,7 @@ In addition, this repository provides the data-specific normalization and augmen
     - If “most_frequent”, then replace missing using the most frequent value along each column. Can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
     - If “constant”, then replace missing values with fill_value. Can be used with strings or numeric data.
 
-- To input your own image data, you can need to cust
+- To input your own image data, you need to customize the preprocessing code in the 
 
 
 ## 3.Experiments
@@ -114,13 +115,12 @@ python main_heckmandg.py --data_name [your data]
     - each obs (image) -> (#channels, width, height)
 
 ```bash
-# This is the example of tabular data (# channel: 3, # width: 3, # height: 3).
-# red channel
+# This is the example of tabular data (# observation: 3, # variables: 3)
 [[10, 10, 10],
 [10, 10, 10],
 [10, 10, 10],]
 
-# This is the exaple of each image that has the 3-dimensional matrix (# channel: 3, # width: 3, # height: 3).
+# This is the example of image data. Each observation has the 3-dimensional tensor (# channel: 3, # width: 3, # height: 3).
 
 # red channel
 [[10, 10, 10],
@@ -152,13 +152,28 @@ if True:
 ```
 
 **3. HeckmanDG**
-- Here, we initialize the neural networks (NNs) and run the Heckman DG model. For the intiv
+- Here, we initialize the neural networks (NNs) and run the Heckman DG model. We use deep neural networks (DNNs; a.k.a. multi-layer perceptron) and convolutional nerual netoworks (CNNs) for the tabular data and image data, respectively.
 
-##### Tabular Data: **HeckmanMLP** 
-- For the tabular data, you need to import the **HeckmanMPL** function. The **HeckmanMPL** contains Multi-Layer Perceptrons (MLP; which means the plain neural networks consising of multiple layers and ). You can put int the n
+##### Tabular Data: **HeckmanDNN** 
+For the tabular data, you need to import the **HeckmanDNN** function. The **HeckmanDNN** contains selection model (g_layers) and outcome model (f_layers), so please put the number of node and layers to construct them. This is an example of the **HeckmanDNN**.
+
+```python
+network = HeckmanDNN([tr_x.shape[1], 128, 64, 32, 1], 
+                     [tr_x.shape[1], 64, 32, 16, args.num_domains], 
+                     dropout=0.5, 
+                     batchnorm=True, 
+                     activation='ReLU')
+```
+
+neural netowrks consisting of multiple nodes and layers.  
+ - **Tabular data** is a specific form of structured data that is organized into rows and columns, like a spreadsheet. Each row in a table represents a single record, while each column represents a specific attribute or variable associated with that record.
+
+
 
 ##### Image Data: **HeckmanCNN**. 
 For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains Multi-Layer Perceptrons (MLP; which means the plain neural networks consising of multiple layers and ). You can put int the n
+- **Image data** refers to damage data refers to data that is represented in the form of images or pictures. Images are made up of pixels, each of which has a numerical value that represents its color or intensity. Image data is structured in a 2D or 3D format, with pixels arranged in rows and columns. The **2D format** refers to an image that has two dimensions: (height and width). These dimensions define the size and shape of the image, and the pixels that make up the image are arranged in a rectangular grid with rows and columns. The **3D format**, on the other hand, refers to an image that has three dimensions: height, width, and depth (the number of channels; e.g. 3 if the channels are composed of Red, Green, and Blue). 
+
 
 ##### what functions for what
 
@@ -190,8 +205,22 @@ elif data_type == 'image':
  
  ##### what is the training, valid data, loss axis, etc.
  
-- From the function of **plots_loss**, we can see the [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
-- From the function of **plots_probit**, we can see the [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf) that represents the distribution of probits for each domain. To yeild the probits, we first need to model.get_selection_probit
+- From the function of **plots_loss**, we can see the [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf) as follows:
+
+![image](https://user-images.githubusercontent.com/36376255/229378713-62511fcb-be4a-4973-a6e5-21029765d3fa.png)
+
+The x-axis represent the epoch and y-axes are loss, auroc, and rho trajectory in the training process.
+
+<!-- [loss_curves](https://user-images.githubu![loss_curves](https://user-images.githubusercontent.com/36376255/229378641-c3c8804e-da57-469e-8a57-8478ad4e6af2.png)
+![auroc_curves](https://user-images.githubusercontent.com/36376255/229378658-9153dd42-6985-430e-a09b-b1d36d920c08.png)
+![rho_curves](https://user-images.githubusercontent.com/36376255/229378644-0e9a3a00-9bde-4de4-a2ff-b173e163e8f2.png)
+sercontent.com/36376255/229377704-2cca889b-b7d0-4a81-ad7f-4d7654853fb0.png) -->
+
+- From the function of **plots_probit**, we can see the [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf) that represents the distribution of probits for each domain. To yeild the probits, we first need to model.get_selection_probit!
+
+![image](https://user-images.githubusercontent.com/36376255/229378704-24477849-d9ce-49c7-bf0a-97724fcd7c81.png)
+
+
 plots_loss(model, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args.data}_loss.pdf")
 probits, labels = model.get_selection_probit(train_loader)
 plots_probit(probits, labels, args, domain_color_map, path=f"./results/plots/HeckmanDG_{args.data}_probits.pdf")
