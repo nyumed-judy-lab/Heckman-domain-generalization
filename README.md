@@ -96,6 +96,7 @@ We use the **SimpleImputer(strategy='mean')** for the missing value imputation (
 
 
 **Data Augmentation**
+
 Summary on the four datasets from WILDS benchmark. 
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
