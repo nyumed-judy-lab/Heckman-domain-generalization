@@ -11,9 +11,11 @@ Please refer to the following papers to set hyperparameters and reproduce experi
 * what functions for what
 -->
 
-This repository provides the PyTorch implementation of Heckman DG. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of neural networks structures. For tabular datasets, we use the multi-layer NN. For image datasets, we use data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
+This repository provides the PyTorch implementation of Heckman DG. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of neural networks structures. 
+- For tabular datasets, we use the multi-layer NN. 
+- For image datasets, we use data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
 
-## 1. Installation
+## Installation
 Please see [requirements.txt](requirements.txt). It presents the names and versions of all libraries that we have to install before the implementation of this repository. Please note that we mainly use the Pytorch backend libraries as follows:
 - torch==1.10.0
 - torchaudio==0.10.0
@@ -23,12 +25,9 @@ Please see [requirements.txt](requirements.txt). It presents the names and versi
 ```bash
 # pip
 pip install -r requirements.txt
-
-# conda
-conda install --file requirements.txt
 ```
 
-## 2. Data Preparation
+## **Data Preparation**
 Please put your data in [data](data). If you want to apply **structured (tabular)** data, please put your data in [data](data). If you want to use **WILDS** benchmark, please run the following code to download it on [wilds](data/benchmark/wilds). 
 
 ``` bash
@@ -36,88 +35,69 @@ Please put your data in [data](data). If you want to apply **structured (tabular
 python download_wilds_data.py --root_dir ./data/benchmark/wilds
 ```
 
-## 3.Experiments
-Please go to [main_heckmandg.py](main_heckmandg.py) and run it as follows:
+## **Experiments**
+Please go to [main_heckmandg.py](main_heckmandg.py). The experiment is composed of the following 4 steps; (1) Experiment Settings, (2) Data Preprocessing, (3) Heckman DG, (4) Result Analysis.
 
-```bash
-# Run Heckman DG on your data
-
-python main_heckmandg.py --data_name [your data]
-```
-
-The experiment is composed of the following 4 steps; (1) Experiment Settings, (2) Data Preprocessing, (3) Heckman DG, (4) Result Analysis.
 
 ### **1. Experiment Settings**
-- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [main_heckmandg.py](main_heckmandg.py). 
+- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the INSIGHT and WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [argmarser.py](utils/argparser.py). 
 
+- The <font color="blue">**input**</font> of data_argument function is the data_name and the <font color="blue">**output**</font> of the data-specific arguments are configuration sets and the data_type ('tabular' or 'image'). 
 
  ```python
-def args_cameloyn17(args, experiment_name):
-    args.data = 'camelyon17'
-    args.backbone = 'densenet121'
-    args.experiment_name = experiment_name
-    args.batch_size = 32
-    args.eval_batch_size = 32
-    args.epochs = 5
-    args.optimizer = 'sgd'
-    args.lr = 0.001
-    args.weight_decay = 0.00001 
-    args.pretrained = True 
-    args.device = 'cuda'
-    return args
+# data-specific arguments 
+args, data_type = data_argument(data_name)
 ```
 
 ### **2. Data Preprocessing**
 This repository provides HeckmanDG for two data types including (1) tabular, (2) image data.
 
-#### **Preprocessing of Tabular data**
-Compared to Image data, **Tabular data** is a specific form of structured data that is organized into rows and columns with each row representing a record or observation, and each column representing a variable or attribute. The shape of the tabular data is (# observations, # variables) and below is the example of tabular data (# observation: 3, # variables: 3).
+#### **2.1 Preprocessing of Tabular data**
+**Tabular data** is a specific form of structured data that is organized into rows and columns. Each row represents an observation, and each column represents a variable. The shape of the tabular data is (# observations, # variables) and below is the example of tabular data with the shape of (# observation: 3, # variables: 3).
 
 ```bash
 [[10, 10, 10],
 [10, 10, 10],
 [10, 10, 10],]
 ```
+
 This repository provides the functions that can perform the **standardization** and the **Missing value imputation**. 
 
-**Standardization**
-Standardization is for transforming the input data to have a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
- - 1. Calculate the mean and standard deviation of each feature (column) in the training data.
- - 2, Transform the training data by subtracting the mean and dividing by the standard deviation for each feature. This will center the data around zero and scale it to have a standard deviation of one.
- - 3. Use the same mean and standard deviation values to transform the validation and testing data. This is important to ensure that the validation and testing data are processed in the same way as the training data.
+- **Standardization**: transforms the input data to have a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
+  1. Calculate the mean and standard deviation of each feature (column) in the training data.
+  2. Transform the training data by subtracting the mean and dividing by the standard deviation for each feature. This will center the data around zero and scale it to have a standard deviation of one.
+  3. Use the same mean and standard deviation values to transform the validation and testing data. This is important to ensure that the validation and testing data are processed in the same way as the training data.
 
-In this reprository, we use the function **StandardScaler**.
+
 ```python
+# In this reprository, we use the function StandardScaler
 from sklearn.preprocessing import StandardScaler
 # Create a StandardScaler object
 scaler = StandardScaler()
 # Fit the scaler to the training data and transform it
-X_train_scaled = scaler.fit_transform(X_train)
+scaler_fitted = scaler.fit(x_train)
+x_train_scaled = scaler_fitted.transform(x_train)
 # Use the same scaler to transform the validation and testing data
-X_val_scaled = scaler.transform(X_val)
-X_test_scaled = scaler.transform(X_test)
+x_val_scaled = scaler_fitted.transform(x_val)
+x_test_scaled = scaler_fitted.transform(x_test)
 ```
 
-**Missing value imputation**
+- **Missing value imputation**
 We use the **SimpleImputer(strategy='mean')** for the missing value imputation (you can change the stratefy 'median', 'most_frequent', 'constant'). 
- - If “mean”, then replace missing values using the mean along each column. Can only be used with numeric data.
- - If “median”, then replace missing values using the median along each column. Can only be used with numeric data.
- - If “most_frequent”, then replace missing using the most frequent value along each column. Can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
- - If “constant”, then replace missing values with fill_value. Can be used with strings or numeric data.
+  - If “mean”, then replace missing values using the mean along each column. Can only be used with numeric data.
+  - If “median”, then replace missing values using the median along each column. Can only be used with numeric data.
+  - If “most_frequent”, then replace missing using the most frequent value along each column. Can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
 
-#### **Preprocessing of Image (WILDS benchmark) data** 
+#### **2.2 Preprocessing of Image (WILDS benchmark) data**#### 
 
-
-**Image data** refers to data that is represented in the form of images or pictures. Images are made up of pixels, each of which has a numerical value that represents its color or intensity. Image data is structured in a 2D or 3D format, with pixels arranged in rows and columns. The **2D format** refers to an image that has two dimensions: (height and width). These dimensions define the size and shape of the image, and the pixels that make up the image are arranged in a rectangular grid with rows and columns. The **3D format**, on the other hand, refers to an image that has three dimensions: height, width, and depth (the number of channels; e.g. 3 if the channels are composed of Red, Green, and Blue). 
+**Image data**: Image data is structured in a 2D or 3D format, with pixels arranged in rows and columns. The **2D format** refers to an image that has two dimensions: (height and width). These dimensions define the size and shape of the image, and the pixels that make up the image are arranged in a rectangular grid with rows and columns. The **3D format** refers to an image that has three dimensions: height, width, and depth (a.k.a. the number of channels; e.g. 3 if the channels are composed of Red, Green, and Blue). 
 
 - Shape of the unstructured data (image): (# observations, # channels, width, height) and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height).
 
 
-** Normalization**
-ImageNet ...
+**Normalization**
 
 **Data Augmentation**
-...
 
 
 
