@@ -95,9 +95,14 @@ We use the **SimpleImputer(strategy='mean')** for the missing value imputation (
 - Shape of the unstructured data (image): (# observations, # channels, width, height) and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height).
 
 
-**Normalization**
-
 **Data Augmentation**
+
+Summary on the four datasets from WILDS benchmark. 
+![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+
+<img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
+
+This figure represent hyperparameters of two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
 
 
 
@@ -128,9 +133,7 @@ network = HeckmanCNN(args)
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
   - plots of the probits [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf)
   - AUC scores [prediction results](results/prediction/HeckmanDG_camelyon17.csv)
- 
- ##### what is the training, valid data, loss axis, etc.
- 
+
 - From the function of **plots_loss**, we can see the following [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf). The x-axis represent the epoch and y-axes are loss, auroc, and rho trajectory in the training process.
 
 ![image](https://user-images.githubusercontent.com/36376255/229378713-62511fcb-be4a-4973-a6e5-21029765d3fa.png)
