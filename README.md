@@ -128,6 +128,9 @@ For the image data, you need to import the **HeckmanCNN**. The function of **Hec
 ```python
 network = HeckmanCNN(args)
 ```
+
+Both networks are put into the **HeckmanBinaryClassifier**, and the output is the model (object), and it is saved in the results folder.
+
 ### **4. Result Analysis**
 - The results of this code are as follows:
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
