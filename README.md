@@ -90,19 +90,34 @@ We use the **SimpleImputer(strategy='mean')** for the missing value imputation (
 
 #### **2.2 Preprocessing of Image (WILDS benchmark) data**#### 
 
-**Image data**: Image data is structured in a 2D or 3D format, with pixels arranged in rows and columns. The **2D format** refers to an image that has two dimensions: (height and width). These dimensions define the size and shape of the image, and the pixels that make up the image are arranged in a rectangular grid with rows and columns. The **3D format** refers to an image that has three dimensions: height, width, and depth (a.k.a. the number of channels; e.g., 3 if the channels are composed of Red, Green, and Blue). 
-
-- Shape of the unstructured data (image): (# observations, # channels, width, height), and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put a subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height).
+**Image data**: Image data is structured in a 3D format. The **3D format** refers to an image that has three dimensions (# observations, # channels, width, height), and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put a subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height). Below is the example of an image having the shape of the (#channels: 3, width: 3, height: 3).
 
 
-**Data Augmentation**
+```bash
+red
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+green
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+blue
+[[10, 10, 10],
+[10, 10, 10],
+[10, 10, 10],]
+```
+The fuction **IdentityTransform** provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
+Please see the details in [tranforms](utils_datasets/transforms.py).
 
-Summary of the four datasets from the WILDS benchmark. 
-![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+[tranforms](utils_datasets/transforms.py) includeds **Data Normalization** module having pre-defined mean and std values for each domain and channel, and **Data Augmentation** module for each dataset as follows:
+
 
 <img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
 
 This figure represents hyperparameters of the two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
+![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+
 
 
 
