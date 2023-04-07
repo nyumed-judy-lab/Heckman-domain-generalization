@@ -6,11 +6,12 @@ This repository provides the PyTorch implementation of Heckman DG. We use the on
 - For image datasets, we use data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
 
 ## Installation
-Please see [requirements.txt](requirements.txt). It presents the names and versions of all libraries that we have to install before the implementation of this repository. Please note that we mainly use the Pytorch backend libraries as follows:
+Before running the code in this repository, you will need to install the required dependencies listed in [requirements.txt](requirements.txt). This file contains the names and versions of all libraries that we have to install. We mainly use PyTorch backend libraries, and the following versions are recommended:
 - torch==1.10.0
 - torchaudio==0.10.0
 - torchmetrics==0.11.1
 - torchvision==0.11.0
+To install these dependencies, simply run the following command:
 
 ```bash
 # pip
@@ -18,11 +19,22 @@ pip install -r requirements.txt
 ```
 
 ## **Data Preparation**
-Please put your data in [data](data). If you want to apply **structured (tabular)** data, please put your data in [data](data). If you want to use **WILDS** benchmark, please run the following code to download it on [wilds](data/benchmark/wilds). 
+To prepare your data for use with this repository, follow these steps:
+
+**structured (tabular)**
+- If you plan to use structured (tabular) data, please place your data in the [data](data) directory.
+
+**WILDS Benchmark Data**
+- If you plan to use the WILDS benchmark, please follow these steps to download the data:
+ 1. Create a directory named wilds inside the data/benchmark directory.
+ 2. Navigate to the data/benchmark/wilds directory.
+ 3. Run the following command to download the data:
+
+Please put your data in [data](data). If you want to apply **structured (tabular)** data, please put your data in . If you want to use **WILDS** benchmark, please run the following code to download it on [wilds](data/benchmark/wilds). 
 
 ``` bash
 # Run download_wilds_data.py
-python download_wilds_data.py --root_dir ./data/benchmark/wilds
+python download_wilds_data.py --root_dir ./yourdirectory/
 ```
 
 ## **Experiments**
