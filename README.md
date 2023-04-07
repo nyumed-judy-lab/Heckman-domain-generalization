@@ -1,15 +1,5 @@
 # Heckman-domain-generalization
-<!-- 
-## References
-Please refer to the following papers to set hyperparameters and reproduce experiments on the WILDS benchmark.
-- [WILDS](https://proceedings.mlr.press/v139/koh21a) paper: Koh, P. W., Sagawa, S., Marklund, H., Xie, S. M., Zhang, M., Balsubramani, A., ... & Liang, P. (2021, July). Wilds: A benchmark of in-the-wild distribution shifts. In International Conference on Machine Learning (pp. 5637-5664). PMLR.
-- [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper: Kahng, H., Do, H., & Zhong, J. Domain Generalization via Heckman-type Selection Models. In The Eleventh International Conference on Learning Representations.
-
-* ONE FILE for all datasets (and the readme.md file)
-* What are the input and output of each step?
-* What is the shape of the data (image, tabular)
-* what functions for what
--->
+This file contains a detailed explanation of the functions in the given Python code. The code performs data preparation, runs an experiment using the HeckmanDG method, and evaluates the results. The code can be used for both tabular and image data.
 
 This repository provides the PyTorch implementation of Heckman DG. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of neural network structures. 
 - For tabular datasets, we use the multi-layer NN. 
@@ -36,10 +26,14 @@ python download_wilds_data.py --root_dir ./data/benchmark/wilds
 ```
 
 ## **Experiments**
+This code runs the implementation of the HeckmanDG algorithm on tabular or image data. The HeckmanDG algorithm is a deep generative model that simultaneously models the confounding effects of latent domains and selects the most predictive features to make the prediction for the target task. This implementation includes two models, a deep neural network (DNN) model and a convolutional neural network (CNN) model, and can be used for both tabular and image data.
+
 Please go to [main_heckmandg.py](main_heckmandg.py). The experiment is composed of the following 4 steps; (1) Experiment Settings, (2) Data Preprocessing, (3) Heckman DG, (4) Result Analysis.
 
 
 ### **1. Experiment Settings**
+This section imports the necessary modules and sets the experiment settings, such as the data name and the experiment name. The data_name variable can be set to 'insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam' depending on the dataset used. The code then calls the data_argument function to obtain the arguments for the selected dataset. The fix_random_seed function sets the random seed to a fixed value.
+
 - Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the INSIGHT and WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [argmarser.py](utils/argparser.py). 
 
 - The <font color="blue">**input**</font> of data_argument function is the data_name and the <font color="blue">**output**</font> of the data-specific arguments are configuration sets and the data_type ('tabular' or 'image'). 
@@ -50,6 +44,8 @@ args, data_type = data_argument(data_name)
 ```
 
 ### **2. Data Preprocessing**
+This section imports the necessary modules and preprocesses the data. If the data is tabular, the code reads the data from a feather file and separates the numerical and categorical columns. The train_test_split function is used to split the data into training and validation sets. The DatasetImporter_tabular function imports the data and applies imputation and scaling to the numerical features. If the data is image data, the DatasetImporter function imports the data and returns the train, validation, and test loaders.
+
 This repository provides HeckmanDG for two data types, including (1) tabular, and (2) image data.
 
 #### **2.1 Preprocessing of Tabular data**
@@ -119,10 +115,9 @@ This figure represents hyperparameters of the two-step optimization of the Heckm
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
 
-
-
-
 ### **3. HeckmanDG**
+This section imports the necessary modules and defines the network and model for HeckmanDG. If the data is tabular, a HeckmanDNN network is defined with four hidden layers, batch normalization, dropout, and ReLU activation. The optimizer and scheduler are defined using partial functions. A HeckmanDGBinaryClassifier model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function. If the data is image data, a HeckmanCNN network is defined with four convolutional layers, batch normalization, dropout, and ReLU activation. A HeckmanDGBinaryClassifierCNN model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function.
+
 - Here, we initialize the neural networks (NNs) and run the Heckman DG model. We use deep neural networks (DNNs; a.k.a. multi-layer perceptron) and convolutional neural networks (CNNs) for the tabular data and image data, respectively.
 
 ##### Tabular Data: **HeckmanDNN** 
@@ -146,7 +141,9 @@ network = HeckmanCNN(args)
 
 Both networks are put into the **HeckmanBinaryClassifier**, and the output is the model (object), and it is saved in the results folder.
 
-### **4. Result Analysis**
+### **4. Evaluation **
+This section evaluates the trained model on the validation and test sets. The evaluate function calculates the accuracy, F1 score, and AUC-ROC score of the model on the validation and test sets. The plot_feature_importance function plots the importance of the top 20 features selected by the model. The plot_confounding_effect function plots the confounding effect of each latent domain on the prediction. Finally, the save_prediction function saves the predicted labels and confidence scores of the test set.
+
 - The results of this code are as follows:
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
   - plots of the probits [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf)
@@ -191,4 +188,14 @@ This figure represents hyperparameters of the two-step optimization of the Heckm
 #### With your own data
 
 - To input your own image data, you need to customize the preprocessing code in the 
+
+## References
+Please refer to the following papers to set hyperparameters and reproduce experiments on the WILDS benchmark.
+- [WILDS](https://proceedings.mlr.press/v139/koh21a) paper: Koh, P. W., Sagawa, S., Marklund, H., Xie, S. M., Zhang, M., Balsubramani, A., ... & Liang, P. (2021, July). Wilds: A benchmark of in-the-wild distribution shifts. In International Conference on Machine Learning (pp. 5637-5664). PMLR.
+- [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper: Kahng, H., Do, H., & Zhong, J. Domain Generalization via Heckman-type Selection Models. In The Eleventh International Conference on Learning Representations.
+
+* ONE FILE for all datasets (and the readme.md file)
+* What are the input and output of each step?
+* What is the shape of the data (image, tabular)
+* what functions for what
 -->
