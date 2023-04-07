@@ -1,16 +1,13 @@
-# Heckman-domain-generalization
-This file contains a detailed explanation of the functions in the given Python code. The code performs data preparation, runs an experiment using the HeckmanDG method, and evaluates the results. The code can be used for both tabular and image data.
+# **Heckman-domain-generalization**
+This repository provides the PyTorch implementation of Heckman DG. 
 
-This repository provides the PyTorch implementation of Heckman DG. We use the one-step optimization to train the Heckman DG model. In the Heckman DG model, the selection (g) and outcome (f) networks are composed of neural network structures. 
-- For tabular datasets, we use the multi-layer NN. 
-- For image datasets, we use data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
-
-## Installation
+## **Installation**
 Before running the code in this repository, you will need to install the required dependencies listed in [requirements.txt](requirements.txt). This file contains the names and versions of all libraries that we have to install. We mainly use PyTorch backend libraries, and the following versions are recommended:
 - torch==1.10.0
 - torchaudio==0.10.0
 - torchmetrics==0.11.1
 - torchvision==0.11.0
+
 To install these dependencies, simply run the following command:
 
 ```bash
@@ -19,18 +16,11 @@ pip install -r requirements.txt
 ```
 
 ## **Data Preparation**
-To prepare your data for use with this repository, follow these steps:
-
-**structured (tabular)**
-- If you plan to use structured (tabular) data, please place your data in the [data](data) directory.
-
-**WILDS Benchmark Data**
-- If you plan to use the WILDS benchmark, please follow these steps to download the data:
- 1. Create a directory named wilds inside the data/benchmark directory.
- 2. Navigate to the data/benchmark/wilds directory.
- 3. Run the following command to download the data:
-
-Please put your data in [data](data). If you want to apply **structured (tabular)** data, please put your data in . If you want to use **WILDS** benchmark, please run the following code to download it on [wilds](data/benchmark/wilds). 
+To prepare your data for use with this repository, please place your data in the [data](data) directory. 
+- If you plan to use **structured (tabular)**, please place your data in the [data](data) directory.
+- If you plan to use the WILDS benchmark data, please follow these steps to download the data:
+ 1. Create a directory named wilds inside the [wilds](data/benchmark/wilds) directory.
+ 2. Run the following command to download the data:
 
 ``` bash
 # Run download_wilds_data.py
@@ -38,9 +28,11 @@ python download_wilds_data.py --root_dir ./yourdirectory/
 ```
 
 ## **Experiments**
-This code runs the implementation of the HeckmanDG algorithm on tabular or image data. The HeckmanDG algorithm is a deep generative model that simultaneously models the confounding effects of latent domains and selects the most predictive features to make the prediction for the target task. This implementation includes two models, a deep neural network (DNN) model and a convolutional neural network (CNN) model, and can be used for both tabular and image data.
-
-Please go to [main_heckmandg.py](main_heckmandg.py). The experiment is composed of the following 4 steps; (1) Experiment Settings, (2) Data Preprocessing, (3) Heckman DG, (4) Result Analysis.
+Please go to [main_heckmandg.py](main_heckmandg.py) for the implementation of the HeckmanDG on tabular or image data. The code performs data preparation, runs an experiment using the HeckmanDG method, and evaluates the results with the following four steps:
+ 1. Experiment Settings
+ 2. Data Preprocessing
+ 3. Heckman DG
+ 4. Result Analysis
 
 
 ### **1. Experiment Settings**
@@ -131,6 +123,10 @@ This figure represents hyperparameters of the two-step optimization of the Heckm
 This section imports the necessary modules and defines the network and model for HeckmanDG. If the data is tabular, a HeckmanDNN network is defined with four hidden layers, batch normalization, dropout, and ReLU activation. The optimizer and scheduler are defined using partial functions. A HeckmanDGBinaryClassifier model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function. If the data is image data, a HeckmanCNN network is defined with four convolutional layers, batch normalization, dropout, and ReLU activation. A HeckmanDGBinaryClassifierCNN model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function.
 
 - Here, we initialize the neural networks (NNs) and run the Heckman DG model. We use deep neural networks (DNNs; a.k.a. multi-layer perceptron) and convolutional neural networks (CNNs) for the tabular data and image data, respectively.
+
+- We use the one-step optimization (see HeckmanBinaryClassifier) to train the Heckman DG model. The Heckman DG model has selection (g) network to predict domains and the outcome (f) network to predict label (class, multi-class, or countinous variable). They are composed of neural network structures; deep neural network (DNN; or a.k.a. multi-layer perceptron; MLP) for tabular datasets and convolutional neural networks (CNNs) for image datasets. This repository provides data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
+
+
 
 ##### Tabular Data: **HeckmanDNN** 
 For the tabular data, you need to import the **HeckmanDNN** function. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers), so please put the number of nodes and layers to construct them. This is an example of the **HeckmanDNN**.
