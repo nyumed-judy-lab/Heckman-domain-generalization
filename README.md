@@ -11,8 +11,7 @@ Before running the code in this repository, you will need to install the require
 To install these dependencies, simply run the following command:
 
 ```bash
-# pip
-pip install -r requirements.txt
+conda install -r requirements.txt
 ```
 
 ## **Data Preparation**
