@@ -42,7 +42,7 @@ Please go to [main_heckmandg.py](main_heckmandg.py) for the implementation of th
 ### **1. Experiment Settings**
 This section imports the necessary **Modules** and data-specific **Arguments**. 
 
-#### **Modules**
+#### **1.1 Modules**
 - [x] 1. Data Preparation & Preprocessing
   - [x]  1. Tabular: INSIGHT
   - [x]  2. Image: Cameyloyon17, Povertypmap, iWildCam, Rxrx1
@@ -59,16 +59,16 @@ This section imports the necessary **Modules** and data-specific **Arguments**.
   - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
   - [x]  Plots: Probits scores of Training data, Learning curve
 
-#### **Auguments**
-The ```data_name``` variable has to be set first among ```data_list=['insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam']``` . The code then calls the ```data_argument``` function to obtain the arguments for the selected dataset e.g., ```args =  data_argument(data_name)``` .
+#### **1.2 Auguments**
+- The ```data_name``` variable has to be set first among ```data_list=['insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam']``` . The code then calls the ```data_argument``` function to obtain the arguments for the selected dataset e.g., ```args =  data_argument(data_name)``` .
 
-- So, the **input** of ```data_argument``` function is the ```data_name``` and the **output** is the data-specific arguments ```args``` having configurations and hyperparameters sets. 
+- The **input** of ```data_argument``` function is the ```data_name``` and the **output** is the data-specific arguments ```args``` having configurations and hyperparameters sets. 
 
 - The ```args``` contains data-specific **Configuration** (train_domains, validation_domains, testing domains, num_classes, etc.) and **Hyperparameters** (e.g. data_name, data_type = (image or tabular), backbone = (densnet or etc.), batch_size, epochs, optimizer, learning_rate, weight_decay, augmentation, randaugment, etc.).
 
 - Note that recommended data-specific hyperparameters are already set for the INSIGHT and WILDS benchmark in the functions (```args_insight```, ```args_cameloyn17```, ```args_poverty```, ```args_rxrx1```, ```args_iwildcam```), so if you want to see results with other settings, please create or modify the **args** variable in the [argmarser.py](utils/argparser.py). 
 
--  The ```fix_random_seed(args.seed)``` function then sets the random seed to a fixed value in an implementation.
+- The ```fix_random_seed(args.seed)``` function then sets the random seed to a fixed value in an implementation.
 
 ### **2. Data Preprocessing**
 This repository provides HeckmanDG for two data types, including (1) tabular, and (2) image data.
@@ -82,7 +82,7 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 [10, 10, 10],]
 ```
 
-- If the data is tabular, the code reads the data from a feather file and separates the numerical and categorical columns. The ```train_test_split``` function is used to split the data into training and validation sets. The ```DatasetImporter``` function imports the data and applies **imputation** and **scaling** to the numerical (continuous) variables. 
+- If the data is tabular, the code reads the data from a **.feather** file and separates the numerical and categorical columns. The ```train_test_split``` function is used to split the data into training and validation sets. The ```DatasetImporter``` function imports the data and applies **imputation** and **scaling** to the numerical (continuous) variables. 
 
 - This repository provides the functions that can perform the **standardization** and the **Missing value imputation**. 
 
