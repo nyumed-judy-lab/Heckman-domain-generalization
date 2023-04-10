@@ -93,7 +93,7 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
   - If “most_frequent”, then replace missing using the most frequent value along each column. It can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
 
 #### **2.2 Preprocessing of Image (WILDS benchmark) data**
-**Image data**: Image data is structured in a 3D format. The **3D format** refers to an image that has three dimensions (# observations, # channels, width, height), and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put a subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height). Below is the example of an image having the shape of the (#channels: 3, width: 3, height: 3).
+**Image data**: is structured in a 3D format. The **3D format** refers to an image that has three dimensions (# channels, width, height) and image datasets has four dimensions (# observations, # channels, width, height). We use Pytorch **data_loader** that can put a subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height). Below is the example of an image having the shape of the (#channels: 3, width: 3, height: 3).
 
 
 ```bash
@@ -112,16 +112,21 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 [10, 10, 10],]
 ]
 ```
-- If the data is image data, 
-- 
-- - ```DatasetImporter``` function imports the data and 
-- 
-- ```dataloaders(args, dataset)``` function split the data into  train, validation (id-, ood-), and test loaders to train the model with mini-batch data (subsets of data).
- 
 
+- If the data is image, the function ```DatasetImporter(args)``` the code first reads the data file and then the imported dataset is separated the numerical and categorical columns. 
+
+- The ```DatasetImporter``` function provides three steps for preprocessing as follows:
+ - 
+ - resize
+ - augmentation
+
+
+- The ```dataloaders(args, dataset)``` function then split the data into train, validation (id-, ood-), and test loaders to train the model with mini-batch data (subsets of data).
+ 
 
 - The fuction **InputTransforms** provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
 Please see the details in [tranforms](utils_datasets/transforms.py).
+
 
 [tranforms](utils_datasets/transforms.py) includeds **Data Normalization** module having pre-defined mean and std values for each domain and channel, and **Data Augmentation** module for each dataset as follows:
 
@@ -140,9 +145,19 @@ This section imports the necessary modules and defines the network and model for
 - We use the one-step optimization (see HeckmanBinaryClassifier) to train the Heckman DG model. The Heckman DG model has selection (g) network to predict domains and the outcome (f) network to predict label (class, multi-class, or countinous variable). They are composed of neural network structures; deep neural network (DNN; or a.k.a. multi-layer perceptron; MLP) for tabular datasets and convolutional neural networks (CNNs) for image datasets. This repository provides data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
 
 
+- For the tabular data, you need to import the **HeckmanDNN** function. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers), so please put the number of nodes and layers to construct them. This is an example of the **HeckmanDNN**.
 
-##### Tabular Data: **HeckmanDNN** 
-For the tabular data, you need to import the **HeckmanDNN** function. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers), so please put the number of nodes and layers to construct them. This is an example of the **HeckmanDNN**.
+ - ```HeckmanDG_DNN_BinaryClassifier```: need to construct the structures of f and g netowrks ```HeckmanDNN(f_network_structure, f_network_structure)```.  
+  - f_network_structure: The first layers has to has the number of layers equal to number of columns in data. (e,g, [tr_x.shape[1], 128, 64, 32, 1] ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```)
+ - g_network_structure: ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```
+
+- For the Image data and CNN, three modules are applied:
+ - ```HeckmanDG_CNN_BinaryClassifier```: for the binary classification,
+ - ```HeckmanDG_CNN_Regressor```: for the regression,
+ - ```HeckmanDG_CNN_MultiClassifier```: for the multinomial classification,
+
+
+
 
 ```python
 network = HeckmanDNN([tr_x.shape[1], 128, 64, 32, 1], 
