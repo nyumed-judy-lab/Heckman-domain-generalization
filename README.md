@@ -3,12 +3,16 @@ This repository provides the PyTorch implementation of Heckman DG.
 
 ## **Modules**
 - [x] 1. Data Preparation & Preprocessing modules: INSIGHT, Cameyloyon17, Povertypmap, iWildCam, Rxrx1
-- [x] 2. Data-specific Nerual Networks: HeckmanDNN, HeckmanCNN ```python import HeckmanDNN ```
+  - [x]  1. Tabular: INSIGHT
+  - [x]  2. Image: Cameyloyon17, Povertypmap, iWildCam, Rxrx1
+- [x] 2. Data-specific Nerual Networks
+  - [x]  1. Heckman_DNN
+  - [x]  2. Heckman_CNN
 - [ ] 3. Heckman DG Training modules: 
-  - [x]  1. HeckmdnDG_DNN_Binary
-  - [x]  2. HeckmdnDG_CNN_BinaryClassifier
-  - [x]  3. HeckmdnDG_CNN_Regressor
-  - [ ]  4. HeckmdnDG_CNN_MultiClassifier: In preparation
+  - [x]  1. HeckmanDG_DNN_Binary
+  - [x]  2. HeckmanDG_CNN_BinaryClassifier
+  - [x]  3. HeckmanDG_CNN_Regressor
+  - [ ]  4. HeckmanDG_CNN_MultiClassifier: In preparation
 - [x]  4. Evaulation
   - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
   - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
