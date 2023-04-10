@@ -1,7 +1,23 @@
 # **Heckman-domain-generalization**
 This repository provides the PyTorch implementation of Heckman DG. 
 
+## **Modules**
+- [v] 1. Data Preparation & Preprocessing modules: INSIGHT, Cameyloyon17, Povertypmap, iWildCam, Rxrx1
+- [v] 2. Data-specific NerualHeckman DG Networks: HeckmanDNN, HeckmanCNN ```python import HeckmanDNN ```
 
+- [-] 3. Heckman DG Training modules: 
+ - [v] HeckmdnDG_DNN_Binary
+ - [v] HeckmdnDG_CNN_BinaryClassifier
+ - [v] HeckmdnDG_CNN_Regressor
+ - [-] HeckmdnDG_CNN_MultiClassifier: In preparation
+- [-] 4. Evaulation: 
+ - [v] Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
+ - [v] Regression: Mean Squared, F1 score, AUROC scores of Training, Validation, and Testing data
+ - [v] Plots: Probits scores of Training data
+
+```python
+import HeckmanDNN
+```
 ## **Installation**
 Before running the code in this repository, you will need to install the required dependencies listed in [requirements.txt](requirements.txt). This file contains the names and versions of all libraries that we have to install. We mainly use PyTorch backend libraries, and the following versions are recommended:
 - torch==1.10.0
@@ -166,12 +182,6 @@ This section evaluates the trained model on the validation and test sets. The ev
 
 <!-- ![image](https://user-images.githubusercontent.com/36376255/229378704-24477849-d9ce-49c7-bf0a-97724fcd7c81.png) -->
 
-
-## TO-DO List
-- [ ] Data Preparation & Preprocessing modules: [ ] -[ ] INSIGHT, Cameyloyon17, Po
-- [ ] Heckman DG Networks:
-- [ ] Heckman DG Training modules:
-- [ ] Your task
 
 <!-- 
  **IMAGE**: The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
