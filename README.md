@@ -1,10 +1,6 @@
 # **Heckman-domain-generalization**
 This repository provides the PyTorch implementation of Heckman DG. 
 
-- [ ] Your task
-- [ ] Your task
-- [ ] Your task
-- [ ] Your task
 
 ## **Installation**
 Before running the code in this repository, you will need to install the required dependencies listed in [requirements.txt](requirements.txt). This file contains the names and versions of all libraries that we have to install. We mainly use PyTorch backend libraries, and the following versions are recommended:
@@ -164,11 +160,18 @@ This section evaluates the trained model on the validation and test sets. The ev
 
 - From the function of **plots_loss**, we can see the following [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf). The x-axis represents the epoch, and the y-axes are loss, auroc, and rho trajectory in the training process.
 
-![image](https://user-images.githubusercontent.com/36376255/229378713-62511fcb-be4a-4973-a6e5-21029765d3fa.png)
+<!-- ![image](https://user-images.githubusercontent.com/36376255/229378713-62511fcb-be4a-4973-a6e5-21029765d3fa.png) -->
 
 - From the function of **plots_probit**, we can see the [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf) that represents the distribution of probits for each domain. Please refer to the function of **model.get_selection_probit** yields the probits.
 
-![image](https://user-images.githubusercontent.com/36376255/229378704-24477849-d9ce-49c7-bf0a-97724fcd7c81.png)
+<!-- ![image](https://user-images.githubusercontent.com/36376255/229378704-24477849-d9ce-49c7-bf0a-97724fcd7c81.png) -->
+
+
+
+- [ ] Data Preparation & Preprocessing modules: [V] INSIGHT, Cameyloyon17, Po
+- [ ] Heckman DG Networks:
+- [ ] Heckman DG Training modules:
+- [ ] Your task
 
 <!-- 
  **IMAGE**: The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
