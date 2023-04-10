@@ -167,8 +167,8 @@ This section evaluates the trained model on the validation and test sets. The ev
 <!-- ![image](https://user-images.githubusercontent.com/36376255/229378704-24477849-d9ce-49c7-bf0a-97724fcd7c81.png) -->
 
 
-
-- [ ] Data Preparation & Preprocessing modules: [V] INSIGHT, Cameyloyon17, Po
+## TO-DO List
+- [ ] Data Preparation & Preprocessing modules: [ ] -[ ] INSIGHT, Cameyloyon17, Po
 - [ ] Heckman DG Networks:
 - [ ] Heckman DG Training modules:
 - [ ] Your task
