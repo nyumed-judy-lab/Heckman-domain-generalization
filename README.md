@@ -47,22 +47,29 @@ To prepare your data for use with this repository, please place your data in the
 python download_wilds_data.py --root_dir ./yourdirectory/
 ```
 
-## **Experiments**
-Please go to [main_heckmandg.py](main_heckmandg.py) for the implementation of the HeckmanDG on tabular or image data. The code performs data preparation, runs an experiment using the HeckmanDG method, and evaluates the results with the following four steps:
+## **Heckman DG**
+Please go to [main_heckmandg.py](main_heckmandg.py) for the implementation of the HeckmanDG on tabular or image data. The code performs the following four steps:
  1. Experiment Settings
  2. Data Preprocessing
  3. Heckman DG
- 4. Result Analysis
+ 4. Evaluation
 
 
 ### **1. Experiment Settings**
-This section imports the necessary modules and sets the experiment settings, such as the data name and the experiment name. The data_name variable can be set to 'insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam' depending on the dataset used. The code then calls the data_argument function to obtain the arguments for the selected dataset. The fix_random_seed function sets the random seed to a fixed value.
+This section imports the necessary modules and data-specific experiment settings. The ```data_name``` variable that can be set to 'insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam'. The code then calls the ```data_argument``` function to obtain the arguments for the selected dataset e.g., ```args =  data_argument(data_name)``` . The ```fix_random_seed``` function then sets the random seed to a fixed value in an implementation.
 
-- Here, we set the **data_name** (e.g. insight or camelyon17), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the INSIGHT and WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [argmarser.py](utils/argparser.py). 
+- The ```args``` contain **Configuration** (e.g. data name, data type (image or tabular), backbone), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the INSIGHT and WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [argmarser.py](utils/argparser.py). 
+**
+- **Hypreparatmers**
+- ```args_insight```
+- ```args_cameloyn17```
+- ```args_poverty```
+- ```args_rxrx1```
+- ```args_iwildcam```
 
 - The <font color="blue">**input**</font> of data_argument function is the data_name and the <font color="blue">**output**</font> of the data-specific arguments are configuration sets and the data_type ('tabular' or 'image'). 
 
- ```python
+```python
 # data-specific arguments 
 args, data_type = data_argument(data_name)
 ```
