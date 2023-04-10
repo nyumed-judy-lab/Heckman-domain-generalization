@@ -1,6 +1,11 @@
 # **Heckman-domain-generalization**
 This repository provides the PyTorch implementation of Heckman DG. 
 
+- [ ] Your task
+- [ ] Your task
+- [ ] Your task
+- [ ] Your task
+
 ## **Installation**
 Before running the code in this repository, you will need to install the required dependencies listed in [requirements.txt](requirements.txt). This file contains the names and versions of all libraries that we have to install. We mainly use PyTorch backend libraries, and the following versions are recommended:
 - torch==1.10.0
@@ -11,6 +16,7 @@ Before running the code in this repository, you will need to install the require
 To install these dependencies, simply run the following command:
 
 ```bash
+pip install -f 
 conda install -r requirements.txt
 ```
 
