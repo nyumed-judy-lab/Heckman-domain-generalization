@@ -116,28 +116,30 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 - If the data is image, the function ```DatasetImporter(args)``` the code first reads the data file and then the imported dataset is separated the numerical and categorical columns. 
 
 - The ```DatasetImporter``` function provides three steps for preprocessing as follows:
+ - ```WildsCamelyonDataset()```
+ - ```WildsPovertyMapDataset()```
+ - ```WildsRxRx1Dataset()```
+ - ```WildsIWildCamDataset()```
+ - input shape, num_classes
  - 
- - resize
- - augmentation
 
 
 - The ```dataloaders(args, dataset)``` function then split the data into train, validation (id-, ood-), and test loaders to train the model with mini-batch data (subsets of data).
  
 
-- The fuction **InputTransforms** provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
-Please see the details in [tranforms](utils_datasets/transforms.py).
 
-
-[tranforms](utils_datasets/transforms.py) includeds **Data Normalization** module having pre-defined mean and std values for each domain and channel, and **Data Augmentation** module for each dataset as follows:
-
-
-<img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
-
+<!-- <img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
+ -->
 This figure represents hyperparameters of the two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
-![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
+<!-- ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
+ -->
 ### **3. HeckmanDG**
+
+```network = HeckmanCNN(args)```
+```network = HeckmanDNN(args)```
+
 This section imports the necessary modules and defines the network and model for HeckmanDG. If the data is tabular, a HeckmanDNN network is defined with four hidden layers, batch normalization, dropout, and ReLU activation. The optimizer and scheduler are defined using partial functions. A HeckmanDGBinaryClassifier model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function. If the data is image data, a HeckmanCNN network is defined with four convolutional layers, batch normalization, dropout, and ReLU activation. A HeckmanDGBinaryClassifierCNN model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function.
 
 - Here, we initialize the neural networks (NNs) and run the Heckman DG model. We use deep neural networks (DNNs; a.k.a. multi-layer perceptron) and convolutional neural networks (CNNs) for the tabular data and image data, respectively.
@@ -151,12 +153,6 @@ This section imports the necessary modules and defines the network and model for
   - f_network_structure: The first layers has to has the number of layers equal to number of columns in data. (e,g, [tr_x.shape[1], 128, 64, 32, 1] ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```)
  - g_network_structure: ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```
 
-- For the Image data and CNN, three modules are applied:
- - ```HeckmanDG_CNN_BinaryClassifier```: for the binary classification,
- - ```HeckmanDG_CNN_Regressor```: for the regression,
- - ```HeckmanDG_CNN_MultiClassifier```: for the multinomial classification,
-
-
 
 
 ```python
@@ -166,8 +162,6 @@ network = HeckmanDNN([tr_x.shape[1], 128, 64, 32, 1],
                      batchnorm=True, 
                      activation='ReLU')
 ```
-
-
 ##### Image Data: **HeckmanCNN**. 
 For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains various CNN structures. The input of this **HeckmanCNN** is the argument named **args**. 
 
@@ -176,6 +170,31 @@ network = HeckmanCNN(args)
 ```
 
 Both networks are put into the **HeckmanBinaryClassifier**, and the output is the model (object), and it is saved in the results folder.
+
+- For the Image data and CNN, three modules are applied:
+ - ```HeckmanDG_CNN_BinaryClassifier```: for the binary classification,
+ - ```HeckmanDG_CNN_Regressor```: for the regression,
+ - ```HeckmanDG_CNN_MultiClassifier```: for the multinomial classification,
+
+
+```HeckmanDG_CNN_BinaryClassifier```
+ - ```Camelyon17Transform()```
+ - ```PovertyMapTransform()```
+ - ```RxRx1Transform```
+ - ```IWildCamTransform```
+
+ - resize
+ - As the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation```.
+
+- The fuction **InputTransforms** provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
+Please see the details in [tranforms](utils_datasets/transforms.py).
+
+
+[tranforms](utils_datasets/transforms.py) includeds **Data Normalization** module having pre-defined mean and std values for each domain and channel, and **Data Augmentation** module for each dataset as follows:
+
+
+
+
 
 ### **4. Evaluation **
 This section evaluates the trained model on the validation and test sets. The evaluate function calculates the accuracy, F1 score, and AUC-ROC score of the model on the validation and test sets. The plot_feature_importance function plots the importance of the top 20 features selected by the model. The plot_confounding_effect function plots the confounding effect of each latent domain on the prediction. Finally, the save_prediction function saves the predicted labels and confidence scores of the test set.
