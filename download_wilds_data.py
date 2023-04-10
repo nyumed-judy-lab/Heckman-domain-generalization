@@ -11,11 +11,10 @@ import wilds
 
 
 SUPPORTED_WILDS_DATASETS = [
-    'camelyon17',
+    # 'iwildcam',
+    # 'camelyon17',
     'poverty',
-    'iwildcam',
     'rxrx1',
-    'civilcomments',
 ]
 assert all([s in wilds.supported_datasets for s in SUPPORTED_WILDS_DATASETS])
 
@@ -35,12 +34,16 @@ def parse_arguments():
 
 
 def main(args: argparse.Namespace) -> None:
+    # args = parser.parse_args()
 
     # create root data directory if it does not exist
     os.makedirs(args.root_dir, exist_ok=True)
+    args.root_dir = '/gpfs/home/choy07/workspace/image-benchmark-dg/data/benchmark/'
+    
 
     print(f'Downloading the following datasets: {args.datasets}')
     for dataset in args.datasets:
+        # dataset = args.datasets[0]
         print(f'=== {dataset} ===')
         wilds.get_dataset(
             dataset=dataset,

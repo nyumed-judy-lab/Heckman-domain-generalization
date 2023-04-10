@@ -1,6 +1,5 @@
 #%% Modules
 import os
-import os
 import torch
 import argparse
 import numpy as np
@@ -19,8 +18,7 @@ from itertools import combinations
 import matplotlib.pyplot as plt
 
 #%% 1. Experiment Settings
-# from utils_datasets.defaults import DataDefaults
-from utils.argparser import parse_arguments
+from utils.argparser import DatasetImporter, parse_arguments
 from utils.argparser import args_insight
 from utils.argparser import args_cameloyn17, args_poverty, args_iwildcam, args_rxrx1
 from utils.dataloader import dataloaders, sub_dataloaders
@@ -30,35 +28,41 @@ os.makedirs('./results', exist_ok=True)
 os.makedirs('./results/plots/', exist_ok=True)
 os.makedirs('./results/prediction/', exist_ok=True)
 
-data_name = 'insight' #'insight', 'camelyon17', 'iwildcam', 'iwildcam', 'iwildcam', 'iwildcam'
-experiment_name = 'Heckman DG'
-args = parse_arguments(experiment_name) # basic arguments for image data
-
-    
-def data_argument(data_name):
+#%% 1. Experiment Settings
+def data_argument(args, data_name, fold: str=None):
     if data_name == 'insight':
-        data_type = 'tabular'
         args = args_insight()
-        
     elif data_name == 'camelyon17':
-        data_type = 'image'
-        args = args_cameloyn17(args) 
+        args = args_cameloyn17(args) # data-specific arguments 
     elif data_name == 'poverty':
-        data_type = 'image'
-        args = args_poverty(args)
+        args = args_poverty(args) # data-specific arguments 
+        args.fold_list = ['A', 'B', 'C', 'D', 'E']        
+        if fold is not None:
+            args.fold = fold
+        else:
+            args.fold_list[0] #fold #'A'
     elif data_name == 'rxrx1':
-        data_type = 'image'
-        args = args_rxrx1(args)
+        args = args_rxrx1(args) # data-specific arguments 
     elif data_name == 'iwildcam':
-        data_type = 'image'
-        args = args_iwildcam(args)
+        args = args_iwildcam(args) # data-specific arguments 
     else:
         print("choose the data_name among ('camelyon17', 'camelyon17_ece', 'poverty', 'rxrx1', 'iwildcam')")
-    
-    return args, data_type
+    return args
 
-args, data_type = data_argument(data_name)
-
+data_list = ['insight', 'camelyon17', 'iwildcam', 'poverty', 'rxrx1']
+if True:
+    data_name = 'poverty'
+    experiment_name = 'Heckman DG'
+    # basic arguments for image data
+    args = parse_arguments(experiment_name) 
+    # Data-Specific arguments
+    fold = None
+    if data_name=='poverty':
+        poverty_folds = ['A', 'B', 'C', 'D', 'E']
+        # select specific fold in the poverty
+        fold = poverty_folds[0]
+    args = data_argument(args, data_name, fold)
+    dataset = DatasetImporter(args)
 
 fix_random_seed(args.seed)
 
@@ -66,16 +70,14 @@ fix_random_seed(args.seed)
 from utils.argparser import DatasetImporter
 from utils.preprocessing import DatasetImporter_tabular
 
-if data_type == 'tabular':
-    dat = pd.read_feather(args.root)
-    covariate_list = dat.columns.drop(['SSID', 'SITE', 'CVD'])
-    num_prefix = ['AGE', 'LAB', 'ENC', 'FLWUP', 
-                'VITAL_HT', 'VITAL_WT', 
-                'VITAL_DIASTOLIC', 'VITAL_SYSTOLIC', 
-                'VITAL_BMI'] #'VITAL', 
+if args.data_type == 'tabular':
+    # dat = pd.read_feather(args.root)
+    covariate_list = dataset.columns.drop(['SSID', 'SITE', 'CVD'])
+    # set the name_list of numeric (continuous variables 
+    num_prefix = ['AGE', 'LAB', 'ENC', 'FLWUP', 'VITAL_HT', 'VITAL_WT', 'VITAL_DIASTOLIC', 'VITAL_SYSTOLIC', 'VITAL_BMI'] #'VITAL', 
     num_cols = [c for c in covariate_list if any(c.startswith(prefix) for prefix in num_prefix)]
     cat_cols = [c for c in covariate_list if not any(c.startswith(prefix) for prefix in num_prefix)]
-    domains = dat['SITE'].unique().tolist()
+    domains = dataset['SITE'].unique().tolist()
     
     domain_color_map = {
     'A05': 'orange',
@@ -84,18 +86,18 @@ if data_type == 'tabular':
     'C02': 'slateblue',
     'C05': 'crimson'
     }
+    # set the train domains
     train_domains = ['A05', 'A07', 'B03', 'C05']
     args.train_domains = train_domains
-    train_val_dat, test_dat = train_test_split(dat, stratify=dat['SITE']+dat['CVD'].astype(str), test_size=args.test_size, random_state=args.seed)
+    args.num_domains = len(train_domains)
+    train_val_dat, test_dat = train_test_split(dataset, stratify=dataset['SITE']+dataset['CVD'].astype(str), test_size=args.test_size, random_state=args.seed)
     tr_x, tr_s, tr_y, val_x, val_s, val_y, num_imputer, scaler = DatasetImporter_tabular(train_val_dat, args, num_cols, cat_cols)
-    
 
-elif data_type == 'image':
-    dataset = DatasetImporter(args)
+elif args.data_type == 'image':
     # (1) run the experiment with all data to test the implementation of HeckmanDG (take large amount of memory)
     train_loader, valid_loader, test_loader = dataloaders(args, dataset)
-    # (2) run the experiment with subset of data to test the implementation of HeckmanDG (take small amount of memory)
-    if False:
+    # (2) set TRUE if you want to run the experiment with subset of data to test the implementation of HeckmanDG (take small amount of memory)
+    if True:
         train_loader, valid_loader, test_loader = sub_dataloaders(train_loader, valid_loader, test_loader)
 
 #%% 3. HeckmanDG
@@ -103,7 +105,7 @@ from networks import HeckmanDNN, HeckmanCNN
 from models import HeckmanDGBinaryClassifier, HeckmanDGBinaryClassifierCNN
 from utils_datasets.transforms import InputTransforms
 
-if data_type == 'tabular':
+if args.data_type == 'tabular':
     network = HeckmanDNN([tr_x.shape[1], 128, 64, 32, 1], [tr_x.shape[1], 64, 32, 16, args.num_domains], dropout=0.5, batchnorm=True, activation='ReLU')
     optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
     scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[50, 75, 100, 125], gamma=.1)
@@ -117,7 +119,7 @@ if data_type == 'tabular':
          'valid_y': val_y,
          'valid_s': pd.get_dummies(val_s).values})
     
-elif data_type == 'image':
+elif args.data_type == 'image':
     network = HeckmanCNN(args)
     optimizer = partial(torch.optim.SGD, lr=args.lr, weight_decay=args.weight_decay)
     scheduler = partial(torch.optim.lr_scheduler.MultiStepLR, milestones=[2, 4], gamma=.1)
@@ -138,7 +140,7 @@ if False:
 #%% 4. Results Analysis
 from utils.result import prediction, plots_loss, plots_probit
 # prediction results
-if data_type=='tabular':
+if args.data_type=='tabular':
     all, internal, external = [], [], []
     for site in domains:
         print(site)
@@ -159,7 +161,7 @@ if data_type=='tabular':
     results.to_csv(f'./results/prediction/HeckmanDG_{args.data}.csv')
     
 
-elif data_type=='image':
+elif args.data_type=='image':
     res_tr = prediction(train_loader, model, args)
     res_vl = prediction(valid_loader, model, args)
     res_ts = prediction(test_loader, model, args)

@@ -267,7 +267,7 @@ class HeckmanDGBinaryClassifierCNN:
                 s = torch.Tensor(one_hot).to(self.args.device).to(torch.float32) # (B, *)
 
  
-                batch_probits = self.network(x) # shape(batch, output of f_layers+g_layers) , 
+                batch_probits = self.network(x) # shape (batch, output of f_layers+g_layers) , 
                 batch_prob = normal.cdf(batch_probits[:, 0]) # 0: f_layers
 
                 loss = 0.
