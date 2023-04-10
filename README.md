@@ -2,17 +2,17 @@
 This repository provides the PyTorch implementation of Heckman DG. 
 
 ## **Modules**
-- [x] 1. Data Preparation & Preprocessing modules: INSIGHT, Cameyloyon17, Povertypmap, iWildCam, Rxrx1 [x]
-- [v] 2. Data-specific Nerual Networks: HeckmanDNN, HeckmanCNN ```python import HeckmanDNN ```
-- [-] 3. Heckman DG Training modules: 
-  - [v] 1. HeckmdnDG_DNN_Binary
-  - [v] 2. HeckmdnDG_CNN_BinaryClassifier
-  - [v] 3. HeckmdnDG_CNN_Regressor
-  - [-] 4. HeckmdnDG_CNN_MultiClassifier: In preparation
-- [v] 4. Evaulation
- - [v] Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
- - [v] Regression: Mean Squared, F1 score, AUROC scores of Training, Validation, and Testing data
- - [v] Plots: Probits scores of Training data
+- [x] 1. Data Preparation & Preprocessing modules: INSIGHT, Cameyloyon17, Povertypmap, iWildCam, Rxrx1
+- [x] 2. Data-specific Nerual Networks: HeckmanDNN, HeckmanCNN ```python import HeckmanDNN ```
+- [ ] 3. Heckman DG Training modules: 
+  - [x]  1. HeckmdnDG_DNN_Binary
+  - [x]  2. HeckmdnDG_CNN_BinaryClassifier
+  - [x]  3. HeckmdnDG_CNN_Regressor
+  - [ ]  4. HeckmdnDG_CNN_MultiClassifier: In preparation
+- [x]  4. Evaulation
+  - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
+  - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
+  - [x]  Plots: Probits scores of Training data, Learning curve
 
 ```python
 import HeckmanDNN
@@ -27,8 +27,8 @@ Before running the code in this repository, you will need to install the require
 To install these dependencies, simply run the following command:
 
 ```bash
-pip install -f 
-conda install -r requirements.txt
+pip install -r ./requirements.txt 
+conda install -f ./requirements.txt
 ```
 
 ## **Data Preparation**
