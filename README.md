@@ -1,22 +1,6 @@
 # **Heckman-domain-generalization**
 This repository provides the PyTorch implementation of Heckman DG. 
 
-## **Modules**
-- [x] 1. Data Preparation & Preprocessing
-  - [x]  1. Tabular: INSIGHT
-  - [x]  2. Image: Cameyloyon17, Povertypmap, iWildCam, Rxrx1
-- [x] 2. Data-specific Nerual Networks
-  - [x]  1. Heckman_DNN
-  - [x]  2. Heckman_CNN
-- [ ] 3. Heckman DG Training modules: 
-  - [x]  1. HeckmanDG_DNN_BinaryClassifier (tabular)
-  - [x]  2. HeckmanDG_CNN_BinaryClassifier (image)
-  - [x]  3. HeckmanDG_CNN_Regressor (image)
-  - [ ]  4. HeckmanDG_CNN_MultiClassifier: In preparation (image)
-- [x]  4. Evaulation
-  - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
-  - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
-  - [x]  Plots: Probits scores of Training data, Learning curve
 
 ```python
 import HeckmanDNN
@@ -56,27 +40,37 @@ Please go to [main_heckmandg.py](main_heckmandg.py) for the implementation of th
 
 
 ### **1. Experiment Settings**
-This section imports the necessary modules and data-specific experiment settings. The ```data_name``` variable that can be set to 'insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam'. The code then calls the ```data_argument``` function to obtain the arguments for the selected dataset e.g., ```args =  data_argument(data_name)``` . The ```fix_random_seed``` function then sets the random seed to a fixed value in an implementation.
+This section imports the necessary **Modules** and data-specific **Arguments**. 
 
-- The ```args``` contain **Configuration** (e.g. data name, data type (image or tabular), backbone), **data_shape** (tabular or image), and hyperparameters. You can set hyperparameters with arguments named **args** consisting of the learning rate, weight decay, and optimizer. Please note that recommended data-specific hyperparameters are already set for the INSIGHT and WILDS benchmark, so if you want to see results with other settings, please modify the **args** variable in the [argmarser.py](utils/argparser.py). 
-**
-- **Hypreparatmers**
-- ```args_insight```
-- ```args_cameloyn17```
-- ```args_poverty```
-- ```args_rxrx1```
-- ```args_iwildcam```
+#### **Modules**
+- [x] 1. Data Preparation & Preprocessing
+  - [x]  1. Tabular: INSIGHT
+  - [x]  2. Image: Cameyloyon17, Povertypmap, iWildCam, Rxrx1
+- [x] 2. Data-specific Nerual Networks
+  - [x]  1. Heckman_DNN
+  - [x]  2. Heckman_CNN
+- [ ] 3. Heckman DG Training modules: 
+  - [x]  1. HeckmanDG_DNN_BinaryClassifier (tabular)
+  - [x]  2. HeckmanDG_CNN_BinaryClassifier (image)
+  - [x]  3. HeckmanDG_CNN_Regressor (image)
+  - [ ]  4. HeckmanDG_CNN_MultiClassifier: In preparation (image)
+- [x]  4. Evaulation
+  - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
+  - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
+  - [x]  Plots: Probits scores of Training data, Learning curve
 
-- The <font color="blue">**input**</font> of data_argument function is the data_name and the <font color="blue">**output**</font> of the data-specific arguments are configuration sets and the data_type ('tabular' or 'image'). 
+#### **Auguments**
+The ```data_name``` variable has to be set first among ```data_list=['insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam']``` . The code then calls the ```data_argument``` function to obtain the arguments for the selected dataset e.g., ```args =  data_argument(data_name)``` .
 
-```python
-# data-specific arguments 
-args, data_type = data_argument(data_name)
-```
+- So, the **input** of ```data_argument``` function is the ```data_name``` and the **output** is the data-specific arguments ```args``` having configurations and hyperparameters sets. 
+
+- The ```args``` contains data-specific **Configuration** (train_domains, validation_domains, testing domains, num_classes, etc.) and **Hyperparameters** (e.g. data_name, data_type = (image or tabular), backbone = (densnet or etc.), batch_size, epochs, optimizer, learning_rate, weight_decay, augmentation, randaugment, etc.).
+
+- Note that recommended data-specific hyperparameters are already set for the INSIGHT and WILDS benchmark in the functions (```args_insight```, ```args_cameloyn17```, ```args_poverty```, ```args_rxrx1```, ```args_iwildcam```), so if you want to see results with other settings, please create or modify the **args** variable in the [argmarser.py](utils/argparser.py). 
+
+-  The ```fix_random_seed(args.seed)``` function then sets the random seed to a fixed value in an implementation.
 
 ### **2. Data Preprocessing**
-This section imports the necessary modules and preprocesses the data. If the data is tabular, the code reads the data from a feather file and separates the numerical and categorical columns. The train_test_split function is used to split the data into training and validation sets. The DatasetImporter_tabular function imports the data and applies imputation and scaling to the numerical features. If the data is image data, the DatasetImporter function imports the data and returns the train, validation, and test loaders.
-
 This repository provides HeckmanDG for two data types, including (1) tabular, and (2) image data.
 
 #### **2.1 Preprocessing of Tabular data**
@@ -88,7 +82,9 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 [10, 10, 10],]
 ```
 
-This repository provides the functions that can perform the **standardization** and the **Missing value imputation**. 
+- If the data is tabular, the code reads the data from a feather file and separates the numerical and categorical columns. The ```train_test_split``` function is used to split the data into training and validation sets. The ```DatasetImporter``` function imports the data and applies **imputation** and **scaling** to the numerical (continuous) variables. 
+
+- This repository provides the functions that can perform the **standardization** and the **Missing value imputation**. 
 
 - **Standardization**: transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
   1. Calculate each feature's mean and standard deviation (column) in the training data.
@@ -115,7 +111,10 @@ We use the **SimpleImputer(strategy='mean')** for the missing value imputation (
   - If “median”, then replace missing values using the median along each column. It can only be used with numeric data.
   - If “most_frequent”, then replace missing using the most frequent value along each column. It can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
 
-#### **2.2 Preprocessing of Image (WILDS benchmark) data**#### 
+#### **2.2 Preprocessing of Image (WILDS benchmark) data**
+
+- If the data is image data, the ```DatasetImporter``` function imports the data and returns the train, validation, and test loaders.
+
 
 **Image data**: Image data is structured in a 3D format. The **3D format** refers to an image that has three dimensions (# observations, # channels, width, height), and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put a subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height). Below is the example of an image having the shape of the (#channels: 3, width: 3, height: 3).
 
