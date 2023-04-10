@@ -9,10 +9,10 @@ This repository provides the PyTorch implementation of Heckman DG.
   - [x]  1. Heckman_DNN
   - [x]  2. Heckman_CNN
 - [ ] 3. Heckman DG Training modules: 
-  - [x]  1. HeckmanDG_DNN_Binary
-  - [x]  2. HeckmanDG_CNN_BinaryClassifier
-  - [x]  3. HeckmanDG_CNN_Regressor
-  - [ ]  4. HeckmanDG_CNN_MultiClassifier: In preparation
+  - [x]  1. HeckmanDG_DNN_BinaryClassifier (tabular)
+  - [x]  2. HeckmanDG_CNN_BinaryClassifier (image)
+  - [x]  3. HeckmanDG_CNN_Regressor (image)
+  - [ ]  4. HeckmanDG_CNN_MultiClassifier: In preparation (image)
 - [x]  4. Evaulation
   - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
   - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
