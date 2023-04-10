@@ -2,7 +2,7 @@
 This repository provides the PyTorch implementation of Heckman DG. 
 
 ## **Modules**
-- [v] 1. Data Preparation & Preprocessing modules: INSIGHT, Cameyloyon17, Povertypmap, iWildCam, Rxrx1 [x]
+[v] 1. Data Preparation & Preprocessing modules: INSIGHT, Cameyloyon17, Povertypmap, iWildCam, Rxrx1 [x]
 - [v] 2. Data-specific Nerual Networks: HeckmanDNN, HeckmanCNN ```python import HeckmanDNN ```
 - [-] 3. Heckman DG Training modules: 
   - [v] 1. HeckmdnDG_DNN_Binary
