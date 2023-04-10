@@ -1,10 +1,6 @@
 # **Heckman-domain-generalization**
-This repository provides the PyTorch implementation of Heckman DG. 
+This repository provides the PyTorch implementation of Heckman DG. Need to first install required libraries and download (or put) datasets in [data](./data/).
 
-
-```python
-import HeckmanDNN
-```
 ## **Installation**
 Before running the code in this repository, you will need to install the required dependencies listed in [requirements.txt](requirements.txt). This file contains the names and versions of all libraries that we have to install. We mainly use PyTorch backend libraries, and the following versions are recommended:
 - torch==1.10.0
@@ -82,58 +78,49 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 [10, 10, 10],]
 ```
 
-- If the data is tabular, the code reads the data from a **.feather** file and separates the numerical and categorical columns. The ```train_test_split``` function is used to split the data into training and validation sets. The ```DatasetImporter``` function imports the data and applies **imputation** and **scaling** to the numerical (continuous) variables. 
+- If the data is tabular, the function ```DatasetImporter(args)``` the code first reads the **data.feather** file and then the imported dataset is separated the numerical and categorical columns. 
+- The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
+- The ```preprocessing_tabular``` function then split the data into training and validation sets and applies **imputation** and **scaling** to the numerical (continuous) variables. 
 
-- This repository provides the functions that can perform the **standardization** and the **Missing value imputation**. 
+- **Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
+  1. ```scaler.fit(x_train)```: Calculate each feature's mean and standard deviation (column) in the training data.
+  2. ```scaler_fitted.transform(x_train)``` Transform the training data by subtracting the mean and dividing it by the standard deviation for each feature. This will center the data around zero and scale it to have a standard deviation of one.
+  3. ```scaler_fitted.transform(x_valid or x_test)```: Use the same mean and standard deviation values to transform the validation and testing data. This is important to ensure that the validation and testing data are processed in the same way as the training data.
 
-- **Standardization**: transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
-  1. Calculate each feature's mean and standard deviation (column) in the training data.
-  2. Transform the training data by subtracting the mean and dividing it by the standard deviation for each feature. This will center the data around zero and scale it to have a standard deviation of one.
-  3. Use the same mean and standard deviation values to transform the validation and testing data. This is important to ensure that the validation and testing data are processed in the same way as the training data.
-
-
-```python
-# In this repository, we use the function StandardScaler
-from sklearn.preprocessing import StandardScaler
-# Create a StandardScaler object
-scaler = StandardScaler()
-# Fit the scaler to the training data and transform it
-scaler_fitted = scaler.fit(x_train)
-x_train_scaled = scaler_fitted.transform(x_train)
-# Use the same scaler to transform the validation and testing data
-x_val_scaled = scaler_fitted.transform(x_val)
-x_test_scaled = scaler_fitted.transform(x_test)
-```
-
-- **Missing value imputation**
-We use the **SimpleImputer(strategy='mean')** for the missing value imputation (you can change the strategy 'median', 'most_frequent', 'constant'). 
+- **Missing value imputation**: ```imputer = SimpleImputer(strategy='mean')``` performs the missing value imputation (you can change the strategy 'median', 'most_frequent', 'constant'). 
   - If “mean”, then replace missing values using the mean along each column. It can only be used with numeric data.
   - If “median”, then replace missing values using the median along each column. It can only be used with numeric data.
   - If “most_frequent”, then replace missing using the most frequent value along each column. It can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
 
 #### **2.2 Preprocessing of Image (WILDS benchmark) data**
-
-- If the data is image data, the ```DatasetImporter``` function imports the data and returns the train, validation, and test loaders.
-
-
 **Image data**: Image data is structured in a 3D format. The **3D format** refers to an image that has three dimensions (# observations, # channels, width, height), and each image has the shape of the (#channels, width, height). We use Pytorch **data_loader** that can put a subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height). Below is the example of an image having the shape of the (#channels: 3, width: 3, height: 3).
 
 
 ```bash
-red
+[
+# red
 [[10, 10, 10],
 [10, 10, 10],
 [10, 10, 10],]
-green
+# green
 [[10, 10, 10],
 [10, 10, 10],
 [10, 10, 10],]
-blue
+# blue
 [[10, 10, 10],
 [10, 10, 10],
 [10, 10, 10],]
+]
 ```
-The fuction **IdentityTransform** provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
+- If the data is image data, 
+- 
+- - ```DatasetImporter``` function imports the data and 
+- 
+- ```dataloaders(args, dataset)``` function split the data into  train, validation (id-, ood-), and test loaders to train the model with mini-batch data (subsets of data).
+ 
+
+
+- The fuction **InputTransforms** provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
 Please see the details in [tranforms](utils_datasets/transforms.py).
 
 [tranforms](utils_datasets/transforms.py) includeds **Data Normalization** module having pre-defined mean and std values for each domain and channel, and **Data Augmentation** module for each dataset as follows:
