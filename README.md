@@ -53,7 +53,7 @@ This section imports the necessary **Modules** and data-specific **Arguments**.
 - [x]  4. Evaluation
   - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
   - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
-  - [x]  Plots: Probits scores of Training data, Learning curve
+  - [x]  Plots: plot_probits, plot_loss
 
 #### **1.2 Auguments**
 - The ```data_name``` variable has to be set first among ```data_list=['insight', 'camelyon17', 'poverty', 'rxrx1', or 'iwildcam']``` . The code then calls the ```data_argument``` function to obtain the arguments for the selected dataset e.g., ```args =  data_argument(data_name)``` .
