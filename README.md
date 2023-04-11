@@ -79,7 +79,9 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 ```
 
 - If the data is tabular, the function ```DatasetImporter(args)``` the code first reads the **data.feather** file and then the imported dataset is separated the numerical and categorical columns. 
+
 - The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
+
 - The ```preprocessing_tabular``` function then split the data into training and validation sets and applies **imputation** and **scaling** to the numerical (continuous) variables. 
 
 - **Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
@@ -129,41 +131,84 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 
 
 <!-- <img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
- -->
+
 This figure represents hyperparameters of the two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
 
-<!-- ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 
  -->
 ### **3. HeckmanDG**
+The code imports two neural network architectures: ```HeckmanDNN``` and ```HeckmanCNN```. These architectures are used to create the network used by the models. The code also imports several models (```HeckmanDG_DNN_BinaryClassifier```, ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, ```HeckmanDG_CNN_MultiClassifier```) which utilize the Heckman correction for domain generalization.
 
-```network = HeckmanCNN(args)```
-```network = HeckmanDNN(args)```
+We first initialize the neural networks (NNs) and then run the Heckman DG model. We use deep neural networks (DNNs; a.k.a. multi-layer perceptron) and convolutional neural networks (CNNs) for the tabular data and image data, respectively. We use the **one-step optimization** to train the Heckman DG model. The Heckman DG model has selection (g) network to predict domains and the outcome (f) network to predict label (class, multi-class, or countinous variable for binary classification, multiclass classification, and regression, respectively). This repository provides data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
 
-This section imports the necessary modules and defines the network and model for HeckmanDG. If the data is tabular, a HeckmanDNN network is defined with four hidden layers, batch normalization, dropout, and ReLU activation. The optimizer and scheduler are defined using partial functions. A HeckmanDGBinaryClassifier model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function. If the data is image data, a HeckmanCNN network is defined with four convolutional layers, batch normalization, dropout, and ReLU activation. A HeckmanDGBinaryClassifierCNN model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function.
+#### **3.1 Tabular Data**
+For the tabular data, the code (1) creates a ```HeckmanDNN``` network with the specified layers, and (2) trains a ```HeckmanDG_DNN_BinaryClassifier``` model on the data. The model is trained using the fit function with the specified training and validation data.
 
-- Here, we initialize the neural networks (NNs) and run the Heckman DG model. We use deep neural networks (DNNs; a.k.a. multi-layer perceptron) and convolutional neural networks (CNNs) for the tabular data and image data, respectively.
+##### **3.1.1 Initiailize the Network**: 
+The  ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers). o please put the number of nodes and layers to construct them. This is an example of the **HeckmanDNN**
+The initialized network is put into the ```HeckmanDG_DNN_BinaryClassifier(network)```
 
-- We use the one-step optimization (see HeckmanBinaryClassifier) to train the Heckman DG model. The Heckman DG model has selection (g) network to predict domains and the outcome (f) network to predict label (class, multi-class, or countinous variable). They are composed of neural network structures; deep neural network (DNN; or a.k.a. multi-layer perceptron; MLP) for tabular datasets and convolutional neural networks (CNNs) for image datasets. This repository provides data-specific convolutional neural networks (CNN) structures recommended by [WILDS](https://proceedings.mlr.press/v139/koh21a) paper. In addition, we follow the hyperparameters of each data and model recommended by [HeckmanDG](https://openreview.net/forum?id=fk7RbGibe1) paper.  
+##### **3.1.1 HeckmanDNN's Parameters & Attrbutes**
+  - ```f_layers```(PyTorch Sequential module): a list of integers that define the architecture of the DNN for the outcome model.
+  - ```g_layers```(PyTorch Sequential module): a list of integers that define the architecture of the DNN for the selection model.
+  - ```rho```(PyTorch Parameter):  representing the selection equation coefficient.
+  - ```activation```: the activation function to use in the hidden layers (default: nn.ReLU).
+  - ```dropout```: the dropout probability to use in the hidden layers (default: 0.0).
+  - ```batchnorm```: whether to use batch normalization in the hidden layers (default: False).
+  - ```bias```: whether to include bias in the linear layers (default: True).
+  - **functions**
+   - ```forward```: takes an input tensor x and returns the concatenation of the outputs of the DNNs for the outcome model (f) and the selection model (g).
+   - ```forward_f```: takes an input tensor x and returns the output of the DNN for the outcome of interest.
+   - ```forward_g```: takes an input tensor x and returns the output of the DNN for the selection process.
+
+##### **3.1.2. Train the model** ```HeckmanDG_DNN_BinaryClassifier```
+The ```HeckmanDG_DNN_BinaryClassifier``` class takes four parameters as input: (1) ```network```, (2) ```optimizer```, (3) ```scheduler```, and (4) ```config```.
+ - ```network```: the deep neural network that is used to perform the classification task
+ - ```optimizer```: the optimizer used for backpropagation and gradient descent during training
+ - ```scheduler```: the learning rate scheduler for the optimizer
+ - ```config```: a dictionary containing additional configuration parameters like device (cpu or gpu), maximum number of epochs, and batch size.
+
+The ```fit``` function trains the classifier on the given data. It takes a single input parameter, data, which is a dictionary containing the training and validation data. The dictionary contains the input features for the training and validation sets, along with the target variable and selection bias. The method first creates a data loader for each of the train and validation datasets using the DataLoader class from the torch.utils.data module. It then initializes the optimizer and the learning rate scheduler, and sets up empty lists to store the training and validation loss and AUC values.
+
+**1. training**
+Next, the method iterates over the specified number of epochs, training the network on the training data for each epoch. For each batch in the training data, it performs the following steps:
+ 1. Move the batch data to the specified device (CPU or GPU)
+ 2. Pass the input features through the network to generate predicted probabilities for the target variable
+ 3. Calculate the loss using the Heckman selection model approach, using the predicted probabilities, target variable, and selection bias as input to the loss function.
+ 4. Perform backpropagation and gradient descent to update the network weights
+ 5. Clip the ```rho```value between (-0.99 and 0.99)
+ 6. Append the training loss and AUC values for the current batch to the respective lists.
+
+**2. validation**
+After each epoch of training, the it evaluates the network on the validation data. For each batch in the validation data, it performs the same steps as for the training data, except it does not perform backpropagation or weight updates. Instead, it appends the validation loss and AUC values for the current batch to the respective lists.
+
+The method then checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model.
+
+**3. model selection**
+Finally, the method returns the best model along with the training and validation loss and AUC values.
+
+#### 3.2 Image Data
+For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains various CNN structures. The input of this **HeckmanCNN** is the argument named **args**. 
+
+If the data is image, the code creates a '''HeckmanCNN''' network with the specified arguments, and trains either a '''HeckmanDG_CNN_BinaryClassifier''', '''HeckmanDG_CNN_Regressor''', or '''HeckmanDG_CNN_MultiClassifier''' model on the data. The model is trained using the fit function with the specified training and validation data loaders.
 
 
-- For the tabular data, you need to import the **HeckmanDNN** function. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers), so please put the number of nodes and layers to construct them. This is an example of the **HeckmanDNN**.
+- Initiailize the Network:  - **HeckmanDNN's Parameters & Attrbutes**
+
+- Train the model: call HeckmanDGInitiailize the Network
+A ```HeckmanDG_DNN_BinaryClassifier``` model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function. If the data is image data, a HeckmanCNN network is defined with four convolutional layers, batch normalization, dropout, and ReLU activation. A HeckmanDGBinaryClassifierCNN model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function.
 
  - ```HeckmanDG_DNN_BinaryClassifier```: need to construct the structures of f and g netowrks ```HeckmanDNN(f_network_structure, f_network_structure)```.  
   - f_network_structure: The first layers has to has the number of layers equal to number of columns in data. (e,g, [tr_x.shape[1], 128, 64, 32, 1] ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```)
- - g_network_structure: ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```
+  - g_network_structure: ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```
 
 
 
-```python
-network = HeckmanDNN([tr_x.shape[1], 128, 64, 32, 1], 
-                     [tr_x.shape[1], 64, 32, 16, args.num_domains], 
-                     dropout=0.5, 
-                     batchnorm=True, 
-                     activation='ReLU')
-```
 ##### Image Data: **HeckmanCNN**. 
-For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains various CNN structures. The input of this **HeckmanCNN** is the argument named **args**. 
+
+
+```network = HeckmanCNN(args)```
 
 ```python
 network = HeckmanCNN(args)
