@@ -82,14 +82,14 @@ For the tabular data, the function ```dataset = DatasetImporter(args)``` reads t
 
 The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
 
-The ```preprocessing_tabular``` function then split the data into training and validation sets and applies **imputation** and **scaling** to the numerical (continuous) variables. 
+The ```preprocessing_tabular``` function then split the data into training and validation sets and applies **scaling** and **imputation** to the numerical (continuous) variables. 
 
-- **Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
+**1. Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
   1. ```scaler.fit(x_train)```: Calculate each feature's mean and standard deviation (column) in the training data.
   2. ```scaler.transform(x_train)``` Transform the training data by subtracting the mean and dividing it by the standard deviation for each feature. This will center the data around zero and scale it to have a standard deviation of one.
   3. ```scaler.transform(x_valid or x_test)```: Use the same mean and standard deviation values to transform the validation and testing data. This is important to ensure that the validation and testing data are processed in the same way as the training data.
 
-- **Missing value imputation**: ```imputer = SimpleImputer(strategy='mean')``` performs the missing value imputation (you can change the strategy 'median', 'most_frequent', 'constant'). 
+**2. Missing value imputation**: ```imputer = SimpleImputer(strategy='mean')``` performs the missing value imputation (you can change the strategy 'median', 'most_frequent', 'constant'). 
   - If “mean”, then replace missing values using the mean along each column. It can only be used with numeric data.
   - If “median”, then replace missing values using the median along each column. It can only be used with numeric data.
   - If “most_frequent”, then replace missing using the most frequent value along each column. It can be used with strings or numeric data. If there is more than one such value, only the smallest is returned.
@@ -172,10 +172,10 @@ The ```fit``` function trains the classifier on the given data, which is a ```di
 #### **3.2 Image Data**
 For the image data, the code (1) creates a ```HeckmanCNN``` network with the specified arguments, and (2) trains either a ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, or ```HeckmanDG_CNN_MultiClassifier``` model depending on the ```data_name``` and ```loss_type```. The model is trained using the ```fit``` function with the specified training and validation data loaders.
 
-##### **3.2.1 Initiailize the Network**
+#### **3.2.1 Initiailize the Network**
 The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` also contains the selection model (g_layers) and outcome model (f_layers) and the data-specific CNN structures are already set. 
 
-##### **3.2.2. Train the model** 
+#### **3.2.2. Train the model** 
 The initialized network is put into the following modules and it is then defined iwth the network, optimizer, and scheduler as input
  - ```model = HeckmanDG_CNN_BinaryClassifier(args, network, optimizer, scheduler)```: for the binary classification (camelyon17),
  - ```model = HeckmanDG_CNN_Regressor(args, network, optimizer, scheduler)```: for the regression (povertymap),
