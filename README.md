@@ -82,7 +82,28 @@ For the tabular data, the function ```dataset = DatasetImporter(args)``` reads t
 
 The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
 
-The ```preprocessing_tabular``` function then split the data into training and validation sets and applies **scaling** and **imputation** to the numerical (continuous) variables. 
+****************************************
+DOMAIN GENERALIZATION
+HOW does User specify
+HOW does Repo specify
+
++ add detailed exap
++ 10 domains
++ domain generalization
+```train_domains``` = ```[domain1, domain 2, or 3]```
+```valid_domains``` = ```[domain1, domain 9]```
+```test_domains``` = ```[domain 10]```
+# training domians: 1, 2, 3 -> training_data / validation_data (hold_out)
+# testing domians: 4
+# int validation: socre on testing of domain 1, 2, 3
+# ext nvalidation: socre on testing of domain 4
+What dataset need to be uploaded
+
+****************************************
+
+
+
+The ```precessed_data=preprocessing_tabular(datset)``` function then split the data into training and validation sets and applies **scaling** and **imputation** to the numerical (continuous) variables. 
 
 **1. Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
   1. ```scaler.fit(x_train)```: Calculate each feature's mean and standard deviation (column) in the training data.
