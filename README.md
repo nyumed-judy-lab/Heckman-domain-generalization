@@ -218,6 +218,7 @@ The model is trained on the training data using the ```fit``` function performin
 This section evaluates the trained model on the training, validation, and test data. 
 
 - For tabular data, the code calculates the AUC score for each domain in the test dataset and records the scores for all domains. The DataFrame is then saved to a CSV file in the ./results/prediction/ directory. The mean score for internal, external, and all sites are also calculated and included in the DataFrame.
++++++ save prediction results (output of the model)
 
 - For image data, the ```prediction()``` function calculates the AUC score, F1 score, and accuracy for the train, validation, and test sets. The scores are recorded in a pandas DataFrame and saved to a CSV file in the [results](./results/prediction/) directory.
 
