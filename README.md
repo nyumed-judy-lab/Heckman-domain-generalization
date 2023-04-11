@@ -50,7 +50,7 @@ This section imports the necessary **Modules** and data-specific **Arguments**.
   - [x]  2. HeckmanDG_CNN_BinaryClassifier (image)
   - [x]  3. HeckmanDG_CNN_Regressor (image)
   - [ ]  4. HeckmanDG_CNN_MultiClassifier: In preparation (image)
-- [x]  4. Evaulation
+- [x]  4. Evaluation
   - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
   - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
   - [x]  Plots: Probits scores of Training data, Learning curve
@@ -169,34 +169,33 @@ The ```fit``` function trains the classifier on the given data, which is a ```di
  2. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
  4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
 
-#### **3.2 Image Data**
+### **3.2 Image Data**
 For the image data, the code (1) creates a ```HeckmanCNN``` network with the specified arguments, and (2) trains either a ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, or ```HeckmanDG_CNN_MultiClassifier``` model depending on the ```data_name``` and ```loss_type```. The model is trained using the ```fit``` function with the specified training and validation data loaders.
 
 #### **3.2.1 Initiailize the Network**
-The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` also contains the selection model (g_layers) and outcome model (f_layers) and the data-specific CNN structures are already set. 
+The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` also contains the selection model (g_layers) and outcome model (f_layers), and the data-specific CNN structures are already set. 
 
 #### **3.2.2. Train the model** 
-The initialized network is put into the following modules and it is then defined iwth the network, optimizer, and scheduler as input
+The initialized network is put into the following modules, and it is then defined with the network, optimizer, and scheduler as input
  - ```model = HeckmanDG_CNN_BinaryClassifier(args, network, optimizer, scheduler)```: for the binary classification (camelyon17),
  - ```model = HeckmanDG_CNN_Regressor(args, network, optimizer, scheduler)```: for the regression (povertymap),
  - ```model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer, scheduler)```: for the multinomial classification,(iWildCam, RxRx1)
 
 The model is trained on the training data using the ```fit``` function performing the following steps: 
- 0. The ```fit()``` function is used to train the model using the given ```train_loader``` and ```valid_loader``` . The training is done using mini-batches of data. The ```fit()``` first initializes the ```optimizer``` and ```scheduler``` for the training process. Then it loops through the epochs of training and for each epoch, it loops through the mini-batches of data in the training data loader.
- 1. For each mini-batch of data, the fuction **InputTransforms** first provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset. Please see the details in [tranforms](utils_datasets/transforms.py) that includes ```Data Normalization``` module having pre-defined mean and std values for each domain and channel, and ```Data Augmentation``` module for each dataset as follows (as the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation``` (but note that the it is all already set):
-  - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (noramlization)
+ 0. The ```fit()``` function is used to train the model using the given ```train_loader``` and ```valid_loader``` . The training is done using mini-batches of data. The ```fit()``` first initializes the ```optimizer``` and ```scheduler``` for the training process. Then it loops through the epochs of training, and for each epoch, it loops through the mini-batches of data in the training data loader.
+ 1. For each mini-batch of data, the function **InputTransforms** first provides data-specific normalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset. Please see the details in [tranforms](utils_datasets/transforms.py) that include ```Data Normalization``` module having pre-defined mean and std values for each domain and channel, and ```Data Augmentation``` module for each dataset as follows (as the hyperparameters, we can select whether we are going to perform augmentation or not with the bool type variable of ```args.augmentation``` (but note that it is all already set):
+  - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (normalization)
   - ```PovertyMapTransform()```: Transforms (Color jittering) for the Poverty Map dataset.
   - ```RxRx1Transform```: Transforms (RandAugment) for the RxRx1 dataset.
   - ```IWildCamTransform```Transforms (RandAugment) for the iWildCam dataset.
- 2. For each transformed mini-batch of data, the model is trained using loss function of each task (classification, regression, and multiclass classification). After the training of the model, the method calculates the loss and AUC score for the validation data using the trained model. The loss and scores (F1 score and accuracy for the classifier, and pearsonr for the regressor) for both training and validation data are stored in the ```train_loss_traj```, ```valid_loss_traj```, ```train_score_traj```, and ```valid_score_traj``` lists. The code also stores the model's parameters that produce the lowest validation loss and the highest validation accuracy. 
+ 2. For each transformed mini-batch of data, the model is trained using the loss function of each task (classification, regression, and multiclass classification). After the training of the model, the method calculates the loss and AUC score for the validation data using the trained model. The loss and scores (F1 score and accuracy for the classifier, and Pearson for the regressor) for both training and validation data are stored in the ```train_loss_traj```, ```valid_loss_traj```, ```train_score_traj```, and ```valid_score_traj``` lists. The code also stores the model's parameters that produce the lowest validation loss and the highest validation accuracy. 
  3. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
  4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
 
-
 ### **4. Evaluation**
-This section evaluates the trained model on the training, validation and test data. 
+This section evaluates the trained model on the training, validation, and test data. 
 
-- For tabular data, the code calculates the AUC score for each doamin in the test dataset and records the scores for all domains. The DataFrame is then saved to a CSV file in the ./results/prediction/ directory. Additionally, the mean score for internal, external, and all sites is calculated and included in the DataFrame.
+- For tabular data, the code calculates the AUC score for each domain in the test dataset and records the scores for all domains. The DataFrame is then saved to a CSV file in the ./results/prediction/ directory. The mean score for internal, external, and all sites are also calculated and included in the DataFrame.
 
 - For image data, the ```prediction()``` function calculates the AUC score, F1 score, and accuracy for the train, validation, and test sets. The scores are recorded in a pandas DataFrame and saved to a CSV file in the [results](./results/prediction/) directory.
 
