@@ -146,10 +146,11 @@ We first initialize the neural networks (NNs) and then run the Heckman DG model.
 For the tabular data, the code (1) creates a ```HeckmanDNN``` network with the specified layers, and (2) trains a ```HeckmanDG_DNN_BinaryClassifier``` model on the data. The model is trained using the fit function with the specified training and validation data.
 
 ##### **3.1.1 Initiailize the Network**: 
-The  ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers). o please put the number of nodes and layers to construct them. This is an example of the **HeckmanDNN**
-The initialized network is put into the ```HeckmanDG_DNN_BinaryClassifier(network)```
+The  ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers). Please put the number of nodes and layers to construct them like ```HeckmanDNN(f_network_structure, f_network_structure)```.  The initialized network is put into the ```HeckmanDG_DNN_BinaryClassifier(network)```
+  - f_network_structure: The first layers has to has the number of layers equal to number of columns in data. (e,g, [tr_x.shape[1], 128, 64, 32, 1] ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```)
+  - g_network_structure: ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```
 
-##### **3.1.1 HeckmanDNN's Parameters & Attrbutes**
+##### HeckmanDNN's Parameters & Attrbutes**
   - ```f_layers```(PyTorch Sequential module): a list of integers that define the architecture of the DNN for the outcome model.
   - ```g_layers```(PyTorch Sequential module): a list of integers that define the architecture of the DNN for the selection model.
   - ```rho```(PyTorch Parameter):  representing the selection equation coefficient.
@@ -162,8 +163,8 @@ The initialized network is put into the ```HeckmanDG_DNN_BinaryClassifier(networ
    - ```forward_f```: takes an input tensor x and returns the output of the DNN for the outcome of interest.
    - ```forward_g```: takes an input tensor x and returns the output of the DNN for the selection process.
 
-##### **3.1.2. Train the model** ```HeckmanDG_DNN_BinaryClassifier```
-The ```HeckmanDG_DNN_BinaryClassifier``` class takes four parameters as input: (1) ```network```, (2) ```optimizer```, (3) ```scheduler```, and (4) ```config```.
+##### **3.1.2. Train the model** 
+A ```HeckmanDG_DNN_BinaryClassifier(network, optimizer, and scheduler)``` model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the ```fit``` function.  The ```HeckmanDG_DNN_BinaryClassifier``` class takes four parameters as input: (1) ```network```, (2) ```optimizer```, (3) ```scheduler```, and (4) ```config```.
  - ```network```: the deep neural network that is used to perform the classification task
  - ```optimizer```: the optimizer used for backpropagation and gradient descent during training
  - ```scheduler```: the learning rate scheduler for the optimizer
@@ -188,20 +189,15 @@ The method then checks if the current validation loss is lower than the best val
 **3. model selection**
 Finally, the method returns the best model along with the training and validation loss and AUC values.
 
-#### 3.2 Image Data
-For the image data, you need to import the **HeckmanCNN**. The function of **HeckmanCNN** contains various CNN structures. The input of this **HeckmanCNN** is the argument named **args**. 
+#### **3.2 Image Data**
+For the image data, the code (1) creates a ```HeckmanCNN``` network with the specified arguments, and (2) trains either a ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, or ```HeckmanDG_CNN_MultiClassifier``` model depending on the ```data_name``` and ```loss_type```. The model is trained using the ```fit``` function with the specified training and validation data loaders.
 
-If the data is image, the code creates a '''HeckmanCNN''' network with the specified arguments, and trains either a '''HeckmanDG_CNN_BinaryClassifier''', '''HeckmanDG_CNN_Regressor''', or '''HeckmanDG_CNN_MultiClassifier''' model on the data. The model is trained using the fit function with the specified training and validation data loaders.
+##### **3.2.1 Initiailize the Network**: 
+The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` also contains the selection model (g_layers) and outcome model (f_layers) and the initialized network is put into the ```HeckmanDG_CNN_BinaryClassifier(network)```, ```HeckmanDG_CNN_Regressor(network)```, or ```HeckmanDG_CNN_MultiClassifier(network)```.
 
+##### **3.2.2. Train the model** ```HeckmanDG_DNN_BinaryClassifier```
 
 - Initiailize the Network:  - **HeckmanDNN's Parameters & Attrbutes**
-
-- Train the model: call HeckmanDGInitiailize the Network
-A ```HeckmanDG_DNN_BinaryClassifier``` model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function. If the data is image data, a HeckmanCNN network is defined with four convolutional layers, batch normalization, dropout, and ReLU activation. A HeckmanDGBinaryClassifierCNN model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the fit function.
-
- - ```HeckmanDG_DNN_BinaryClassifier```: need to construct the structures of f and g netowrks ```HeckmanDNN(f_network_structure, f_network_structure)```.  
-  - f_network_structure: The first layers has to has the number of layers equal to number of columns in data. (e,g, [tr_x.shape[1], 128, 64, 32, 1] ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```)
-  - g_network_structure: ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```
 
 
 
@@ -223,10 +219,14 @@ Both networks are put into the **HeckmanBinaryClassifier**, and the output is th
 
 
 ```HeckmanDG_CNN_BinaryClassifier```
- - ```Camelyon17Transform()```
+ - 
  - ```PovertyMapTransform()```
  - ```RxRx1Transform```
  - ```IWildCamTransform```
+- ```Camelyon17Transform()```: Camelyon17: N/A
+- PovertyMap: Color jittering
+- iWildCam: RandAugment
+- RxRx1: RandAugment
 
  - resize
  - As the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation```.
@@ -241,8 +241,8 @@ Please see the details in [tranforms](utils_datasets/transforms.py).
 
 
 
-### **4. Evaluation **
-This section evaluates the trained model on the validation and test sets. The evaluate function calculates the accuracy, F1 score, and AUC-ROC score of the model on the validation and test sets. The plot_feature_importance function plots the importance of the top 20 features selected by the model. The plot_confounding_effect function plots the confounding effect of each latent domain on the prediction. Finally, the save_prediction function saves the predicted labels and confidence scores of the test set.
+### **4. Evaluation**
+This section evaluates the trained model on the validation and test sets. The evaluate function calculates the accuracy, F1 score, and AUROC score of the model on the validation and test sets.
 
 - The results of this code are as follows:
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
@@ -272,10 +272,6 @@ The **args** contains the name of data, backbone, and hyperparameters (learning 
 - PovertyMap: Regression (wealth index prediction). (In preparation)
 
 In addition, this repository provides the data-specific normalization and augmentation functions as follows:
-- Camelyon17: N/A
-- PovertyMap: Color jittering
-- iWildCam: RandAugment
-- RxRx1: RandAugment
 
 ### WILDS benchmark
 
