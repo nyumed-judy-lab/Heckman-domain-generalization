@@ -86,8 +86,8 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 
 - **Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
   1. ```scaler.fit(x_train)```: Calculate each feature's mean and standard deviation (column) in the training data.
-  2. ```scaler_fitted.transform(x_train)``` Transform the training data by subtracting the mean and dividing it by the standard deviation for each feature. This will center the data around zero and scale it to have a standard deviation of one.
-  3. ```scaler_fitted.transform(x_valid or x_test)```: Use the same mean and standard deviation values to transform the validation and testing data. This is important to ensure that the validation and testing data are processed in the same way as the training data.
+  2. ```scaler.transform(x_train)``` Transform the training data by subtracting the mean and dividing it by the standard deviation for each feature. This will center the data around zero and scale it to have a standard deviation of one.
+  3. ```scaler.transform(x_valid or x_test)```: Use the same mean and standard deviation values to transform the validation and testing data. This is important to ensure that the validation and testing data are processed in the same way as the training data.
 
 - **Missing value imputation**: ```imputer = SimpleImputer(strategy='mean')``` performs the missing value imputation (you can change the strategy 'median', 'most_frequent', 'constant'). 
   - If “mean”, then replace missing values using the mean along each column. It can only be used with numeric data.
@@ -96,7 +96,6 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 
 #### **2.2 Preprocessing of Image (WILDS benchmark) data**
 **Image data**: is structured in a 3D format. The **3D format** refers to an image that has three dimensions (# channels, width, height) and image datasets has four dimensions (# observations, # channels, width, height). We use Pytorch **data_loader** that can put a subset (minibatch) of data to the model in the training process, so the data shape would be (# batch_size, # channels, width, height). Below is the example of an image having the shape of the (#channels: 3, width: 3, height: 3).
-
 
 ```bash
 [
@@ -199,8 +198,6 @@ The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` als
 
 - Initiailize the Network:  - **HeckmanDNN's Parameters & Attrbutes**
 
-
-
 ##### Image Data: **HeckmanCNN**. 
 
 
@@ -217,16 +214,28 @@ Both networks are put into the **HeckmanBinaryClassifier**, and the output is th
  - ```HeckmanDG_CNN_Regressor```: for the regression,
  - ```HeckmanDG_CNN_MultiClassifier```: for the multinomial classification,
 
+The available transforms are:
+
+: 
+IWildCamTransform: 
+RxRx1Transform: 
+PovertyMapTransform: 
 
 ```HeckmanDG_CNN_BinaryClassifier```
- - 
- - ```PovertyMapTransform()```
- - ```RxRx1Transform```
- - ```IWildCamTransform```
-- ```Camelyon17Transform()```: Camelyon17: N/A
-- PovertyMap: Color jittering
-- iWildCam: RandAugment
-- RxRx1: RandAugment
+
+** 1. Domain-Specific Normaliztion **
+** 1. DataAugmentation **
+ - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (domain-specific noramlization, augmemtaion)
+ - ```PovertyMapTransform()```: Transforms (Color jittering) for the Poverty Map dataset.
+ - ```RxRx1Transform```: Transforms (RandAugment) for the RxRx1 dataset.
+ - ```IWildCamTransform```Transforms (RandAugment) for the iWildCam dataset.
+
+```RandomHorizontalFlip```, ```RandAugment```
+For the Augmentation, 
+- ```mean```: a tuple of mean values for normalization (default: (0.720, 0.560, 0.715))
+- ```std```: a tuple of standard deviation values for normalization (default: (0.190, 0.224, 0.170))
+- ```augmentation```: a boolean indicating whether to apply data augmentation (default: False)
+- ```randaugment```: a boolean indicating whether to apply random augmentations (default: False)
 
  - resize
  - As the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation```.
