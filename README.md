@@ -164,10 +164,11 @@ The ```HeckmanDG_DNN_BinaryClassifier(network, optimizer, and scheduler)``` mode
  - ```config```: a dictionary containing additional configuration parameters like device (cpu or gpu), maximum number of epochs, and batch size.
 
 The ```fit``` function trains the classifier on the given data, which is a ```dictionary``` containing the training and validation data. It then initializes the optimizer, learning rate, scheduler, and sets up empty lists to store the training and validation loss and AUC scores. Below is the traning process:
+
  0. the ```fit``` first creates a data loader for each of the train and validation datasets using the ```DataLoader``` class from the ```torch.utils.data module```. The model is trained using the given ```train_loader``` and ```valid_loader``` . The training is perfomed using mini-batches of data. 
  1. For each mini-batch of data, the model is trained using loss function. After the training of the model, the method calculates the loss and AUC score for the validation data using the trained model. The loss and scores (auc score) for both training and validation data are stored in the ```train_loss_traj```, ```valid_loss_traj```, ```train_score_traj```, and ```valid_score_traj``` lists. The code also stores the model's parameters that produce the lowest validation loss and the highest validation accuracy. 
  2. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
- 4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
+ 3. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
 
 ### **3.2 Image Data**
 For the image data, the code (1) creates a ```HeckmanCNN``` network with the specified arguments, and (2) trains either a ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, or ```HeckmanDG_CNN_MultiClassifier``` model depending on the ```data_name``` and ```loss_type```. The model is trained using the ```fit``` function with the specified training and validation data loaders.
