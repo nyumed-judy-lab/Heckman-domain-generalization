@@ -78,11 +78,11 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 [10, 10, 10],]
 ```
 
-- If the data is tabular, the function ```DatasetImporter(args)``` the code first reads the **data.feather** file and then the imported dataset is separated the numerical and categorical columns. 
+For the tabular data, the function ```dataset = DatasetImporter(args)``` reads the ```dataset.feather``` file and then the imported dataset is separated the numerical and categorical columns. 
 
-- The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
+The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
 
-- The ```preprocessing_tabular``` function then split the data into training and validation sets and applies **imputation** and **scaling** to the numerical (continuous) variables. 
+The ```preprocessing_tabular``` function then split the data into training and validation sets and applies **imputation** and **scaling** to the numerical (continuous) variables. 
 
 - **Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
   1. ```scaler.fit(x_train)```: Calculate each feature's mean and standard deviation (column) in the training data.
@@ -114,28 +114,20 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 ]
 ```
 
-- If the data is image, the function ```DatasetImporter(args)``` the code first reads the data file and then the imported dataset is separated the numerical and categorical columns. 
+For the image data, the function ```dataset = DatasetImporter(args)``` reads the data and it has data-speficic modules:
+ - ```dataset = WildsCamelyonDataset()```
+ - ```dataset = WildsPovertyMapDataset()```
+ - ```dataset = WildsRxRx1Dataset()```
+ - ```dataset = WildsIWildCamDataset()```
 
-- The ```DatasetImporter``` function provides three steps for preprocessing as follows:
- - ```WildsCamelyonDataset()```
- - ```WildsPovertyMapDataset()```
- - ```WildsRxRx1Dataset()```
- - ```WildsIWildCamDataset()```
- - input shape, num_classes
- - 
-
-
-- The ```dataloaders(args, dataset)``` function then split the data into train, validation (id-, ood-), and test loaders to train the model with mini-batch data (subsets of data).
+The output ```datsets``` is put into the ```dataloaders(args, dataset)``` function and it then return  ```train_loader, valid_loader, test_loader``` to train the model with mini-batch data (subsets of data).
  
-
-
 <!-- <img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
 
 This figure represents hyperparameters of the two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
 
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
-
- -->
+-->
 ### **3. HeckmanDG**
 The code imports two neural network architectures: ```HeckmanDNN``` and ```HeckmanCNN```. These architectures are used to create the network used by the models. The code also imports several models (```HeckmanDG_DNN_BinaryClassifier```, ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, ```HeckmanDG_CNN_MultiClassifier```) which utilize the Heckman correction for domain generalization.
 
@@ -145,11 +137,12 @@ We first initialize the neural networks (NNs) and then run the Heckman DG model.
 For the tabular data, the code (1) creates a ```HeckmanDNN``` network with the specified layers, and (2) trains a ```HeckmanDG_DNN_BinaryClassifier``` model on the data. The model is trained using the fit function with the specified training and validation data.
 
 ##### **3.1.1 Initiailize the Network**: 
-The  ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers). Please put the number of nodes and layers to construct them like ```HeckmanDNN(f_network_structure, f_network_structure)```.  The initialized network is put into the ```HeckmanDG_DNN_BinaryClassifier(network)```
-  - f_network_structure: The first layers has to has the number of layers equal to number of columns in data. (e,g, [tr_x.shape[1], 128, 64, 32, 1] ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```)
-  - g_network_structure: ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```
+The ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers). Please put the number of nodes and layers to construct them like ```HeckmanDNN(f_network_structure, f_network_structure)```.  The initialized network is put into the ```HeckmanDG_DNN_BinaryClassifier(network)```
 
-##### HeckmanDNN's Parameters & Attrbutes**
+  - ```f_network_structure```: The first and last layers has to be composed of the number of neurons equal to the number of columns and the number of training domains in data (e,g, ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```.)
+  - ```g_network_structure```: The first and last layers has to be composed of the number of neurons equal to the number of columns and the number of classes in data ```[tr_x.shape[1], 64, 32, 16, args.num_classes]```
+
+<!-- The ```HeckmanDNN``` module has the following Parameters & Attrbutes:
   - ```f_layers```(PyTorch Sequential module): a list of integers that define the architecture of the DNN for the outcome model.
   - ```g_layers```(PyTorch Sequential module): a list of integers that define the architecture of the DNN for the selection model.
   - ```rho```(PyTorch Parameter):  representing the selection equation coefficient.
@@ -159,8 +152,9 @@ The  ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains th
   - ```bias```: whether to include bias in the linear layers (default: True).
   - **functions**
    - ```forward```: takes an input tensor x and returns the concatenation of the outputs of the DNNs for the outcome model (f) and the selection model (g).
-   - ```forward_f```: takes an input tensor x and returns the output of the DNN for the outcome of interest.
-   - ```forward_g```: takes an input tensor x and returns the output of the DNN for the selection process.
+   - ```forward_f```: takes an input tensor x and returns the output of the DNN for the outcome model.
+   - ```forward_g```: takes an input tensor x and returns the output of the DNN for the selection model. 
+-->
 
 ##### **3.1.2. Train the model** 
 A ```HeckmanDG_DNN_BinaryClassifier(network, optimizer, and scheduler)``` model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the ```fit``` function.  The ```HeckmanDG_DNN_BinaryClassifier``` class takes four parameters as input: (1) ```network```, (2) ```optimizer```, (3) ```scheduler```, and (4) ```config```.
@@ -169,87 +163,45 @@ A ```HeckmanDG_DNN_BinaryClassifier(network, optimizer, and scheduler)``` model 
  - ```scheduler```: the learning rate scheduler for the optimizer
  - ```config```: a dictionary containing additional configuration parameters like device (cpu or gpu), maximum number of epochs, and batch size.
 
-The ```fit``` function trains the classifier on the given data. It takes a single input parameter, data, which is a dictionary containing the training and validation data. The dictionary contains the input features for the training and validation sets, along with the target variable and selection bias. The method first creates a data loader for each of the train and validation datasets using the DataLoader class from the torch.utils.data module. It then initializes the optimizer and the learning rate scheduler, and sets up empty lists to store the training and validation loss and AUC values.
+The ```fit``` function trains the classifier on the given data, which is a ```dictionary``` containing the training and validation data. The ```fit``` first creates a data loader for each of the train and validation datasets using the ```DataLoader``` class from the ```torch.utils.data module```. It then initializes the optimizer, learning rate, scheduler, and sets up empty lists to store the training and validation loss and AUC scores. Below is the traning process:
 
-**1. training**
-Next, the method iterates over the specified number of epochs, training the network on the training data for each epoch. For each batch in the training data, it performs the following steps:
+ 0. training process is repeated over the defined number of epochs, and for each epoch, each batch in the training data is processed as the following steps:
  1. Move the batch data to the specified device (CPU or GPU)
  2. Pass the input features through the network to generate predicted probabilities for the target variable
  3. Calculate the loss using the Heckman selection model approach, using the predicted probabilities, target variable, and selection bias as input to the loss function.
  4. Perform backpropagation and gradient descent to update the network weights
  5. Clip the ```rho```value between (-0.99 and 0.99)
  6. Append the training loss and AUC values for the current batch to the respective lists.
-
-**2. validation**
-After each epoch of training, the it evaluates the network on the validation data. For each batch in the validation data, it performs the same steps as for the training data, except it does not perform backpropagation or weight updates. Instead, it appends the validation loss and AUC values for the current batch to the respective lists.
-
-The method then checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model.
-
-**3. model selection**
+ 7. Validation: After each epoch of training, the it evaluates the network on the validation data. 
+  - For each batch in the validation data, it performs the same steps as for the training data, except it does not perform backpropagation or weight updates. Instead, it appends the validation loss and AUC values for the current batch to the respective lists.
+ 8. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model.
+ 9. Model selection:
 Finally, the method returns the best model along with the training and validation loss and AUC values.
 
 #### **3.2 Image Data**
 For the image data, the code (1) creates a ```HeckmanCNN``` network with the specified arguments, and (2) trains either a ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, or ```HeckmanDG_CNN_MultiClassifier``` model depending on the ```data_name``` and ```loss_type```. The model is trained using the ```fit``` function with the specified training and validation data loaders.
 
-##### **3.2.1 Initiailize the Network**: 
-The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` also contains the selection model (g_layers) and outcome model (f_layers) and the initialized network is put into the ```HeckmanDG_CNN_BinaryClassifier(network)```, ```HeckmanDG_CNN_Regressor(network)```, or ```HeckmanDG_CNN_MultiClassifier(network)```.
+##### **3.2.1 Initiailize the Network**
+The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` also contains the selection model (g_layers) and outcome model (f_layers) and the data-specific CNN structures are already set. 
 
-##### **3.2.2. Train the model** ```HeckmanDG_DNN_BinaryClassifier```
+##### **3.2.2. Train the model** 
+The initialized network is put into the following modules and it is then defined iwth the network, optimizer, and scheduler as input
+- ```model = HeckmanDG_CNN_BinaryClassifier(args, network, optimizer, scheduler)```: for the binary classification (camelyon17),
+- ```model = HeckmanDG_CNN_Regressor(args, network, optimizer, scheduler)```: for the regression (povertymap),
+- ```model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer, scheduler)```: for the multinomial classification,(iWildCam, RxRx1)
 
-- Initiailize the Network:  - **HeckmanDNN's Parameters & Attrbutes**
 
-##### Image Data: **HeckmanCNN**. 
-
-
-```network = HeckmanCNN(args)```
-
-```python
-network = HeckmanCNN(args)
-```
-
-Both networks are put into the **HeckmanBinaryClassifier**, and the output is the model (object), and it is saved in the results folder.
-
-- For the Image data and CNN, three modules are applied:
- - ```HeckmanDG_CNN_BinaryClassifier```: for the binary classification,
- - ```HeckmanDG_CNN_Regressor```: for the regression,
- - ```HeckmanDG_CNN_MultiClassifier```: for the multinomial classification,
-
-The available transforms are:
-
-: 
-IWildCamTransform: 
-RxRx1Transform: 
-PovertyMapTransform: 
-
-```HeckmanDG_CNN_BinaryClassifier```
-
-** 1. Domain-Specific Normaliztion **
-** 1. DataAugmentation **
- - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (domain-specific noramlization, augmemtaion)
+The model is trained on the training data using the ```fit``` function performing the following steps: 
+ 1. In the training process, the fuction **InputTransforms** first provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
+Please see the details in [tranforms](utils_datasets/transforms.py) that includes ```Data Normalization``` module having pre-defined mean and std values for each domain and channel, and ```Data Augmentation``` module for each dataset as follows (as the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation``` (but note that the it is all already set):
+ - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (noramlization)
  - ```PovertyMapTransform()```: Transforms (Color jittering) for the Poverty Map dataset.
  - ```RxRx1Transform```: Transforms (RandAugment) for the RxRx1 dataset.
  - ```IWildCamTransform```Transforms (RandAugment) for the iWildCam dataset.
-
-```RandomHorizontalFlip```, ```RandAugment```
-For the Augmentation, 
-- ```mean```: a tuple of mean values for normalization (default: (0.720, 0.560, 0.715))
-- ```std```: a tuple of standard deviation values for normalization (default: (0.190, 0.224, 0.170))
-- ```augmentation```: a boolean indicating whether to apply data augmentation (default: False)
-- ```randaugment```: a boolean indicating whether to apply random augmentations (default: False)
-
- - resize
- - As the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation```.
-
-- The fuction **InputTransforms** provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
-Please see the details in [tranforms](utils_datasets/transforms.py).
+2. 
 
 
-[tranforms](utils_datasets/transforms.py) includeds **Data Normalization** module having pre-defined mean and std values for each domain and channel, and **Data Augmentation** module for each dataset as follows:
-
-
-
-
-
+3. 
 ### **4. Evaluation**
 This section evaluates the trained model on the validation and test sets. The evaluate function calculates the accuracy, F1 score, and AUROC score of the model on the validation and test sets.
 
