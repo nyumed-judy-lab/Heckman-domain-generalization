@@ -157,26 +157,17 @@ The ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the
 -->
 
 ##### **3.1.2. Train the model** 
-A ```HeckmanDG_DNN_BinaryClassifier(network, optimizer, and scheduler)``` model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the ```fit``` function.  The ```HeckmanDG_DNN_BinaryClassifier``` class takes four parameters as input: (1) ```network```, (2) ```optimizer```, (3) ```scheduler```, and (4) ```config```.
+The ```HeckmanDG_DNN_BinaryClassifier(network, optimizer, and scheduler)``` model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the ```fit``` function.  The ```HeckmanDG_DNN_BinaryClassifier``` class takes four parameters as input: (1) ```network```, (2) ```optimizer```, (3) ```scheduler```, and (4) ```config```.
  - ```network```: the deep neural network that is used to perform the classification task
  - ```optimizer```: the optimizer used for backpropagation and gradient descent during training
  - ```scheduler```: the learning rate scheduler for the optimizer
  - ```config```: a dictionary containing additional configuration parameters like device (cpu or gpu), maximum number of epochs, and batch size.
 
-The ```fit``` function trains the classifier on the given data, which is a ```dictionary``` containing the training and validation data. The ```fit``` first creates a data loader for each of the train and validation datasets using the ```DataLoader``` class from the ```torch.utils.data module```. It then initializes the optimizer, learning rate, scheduler, and sets up empty lists to store the training and validation loss and AUC scores. Below is the traning process:
-
- 0. training process is repeated over the defined number of epochs, and for each epoch, each batch in the training data is processed as the following steps:
- 1. Move the batch data to the specified device (CPU or GPU)
- 2. Pass the input features through the network to generate predicted probabilities for the target variable
- 3. Calculate the loss using the Heckman selection model approach, using the predicted probabilities, target variable, and selection bias as input to the loss function.
- 4. Perform backpropagation and gradient descent to update the network weights
- 5. Clip the ```rho```value between (-0.99 and 0.99)
- 6. Append the training loss and AUC values for the current batch to the respective lists.
- 7. Validation: After each epoch of training, the it evaluates the network on the validation data. 
-  - For each batch in the validation data, it performs the same steps as for the training data, except it does not perform backpropagation or weight updates. Instead, it appends the validation loss and AUC values for the current batch to the respective lists.
- 8. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model.
- 9. Model selection:
-Finally, the method returns the best model along with the training and validation loss and AUC values.
+The ```fit``` function trains the classifier on the given data, which is a ```dictionary``` containing the training and validation data. It then initializes the optimizer, learning rate, scheduler, and sets up empty lists to store the training and validation loss and AUC scores. Below is the traning process:
+ 0. the ```fit``` first creates a data loader for each of the train and validation datasets using the ```DataLoader``` class from the ```torch.utils.data module```. The model is trained using the given ```train_loader``` and ```valid_loader``` . The training is perfomed using mini-batches of data. 
+ 1. For each mini-batch of data, the model is trained using loss function. After the training of the model, the method calculates the loss and AUC score for the validation data using the trained model. The loss and scores (auc score) for both training and validation data are stored in the ```train_loss_traj```, ```valid_loss_traj```, ```train_score_traj```, and ```valid_score_traj``` lists. The code also stores the model's parameters that produce the lowest validation loss and the highest validation accuracy. 
+ 2. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
+ 4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
 
 #### **3.2 Image Data**
 For the image data, the code (1) creates a ```HeckmanCNN``` network with the specified arguments, and (2) trains either a ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, or ```HeckmanDG_CNN_MultiClassifier``` model depending on the ```data_name``` and ```loss_type```. The model is trained using the ```fit``` function with the specified training and validation data loaders.
@@ -186,66 +177,57 @@ The  ```network = HeckmanCNN(args)``` is defined. The ```HeckmanCNN(args)``` als
 
 ##### **3.2.2. Train the model** 
 The initialized network is put into the following modules and it is then defined iwth the network, optimizer, and scheduler as input
-- ```model = HeckmanDG_CNN_BinaryClassifier(args, network, optimizer, scheduler)```: for the binary classification (camelyon17),
-- ```model = HeckmanDG_CNN_Regressor(args, network, optimizer, scheduler)```: for the regression (povertymap),
-- ```model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer, scheduler)```: for the multinomial classification,(iWildCam, RxRx1)
-
+ - ```model = HeckmanDG_CNN_BinaryClassifier(args, network, optimizer, scheduler)```: for the binary classification (camelyon17),
+ - ```model = HeckmanDG_CNN_Regressor(args, network, optimizer, scheduler)```: for the regression (povertymap),
+ - ```model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer, scheduler)```: for the multinomial classification,(iWildCam, RxRx1)
 
 The model is trained on the training data using the ```fit``` function performing the following steps: 
- 1. In the training process, the fuction **InputTransforms** first provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset.
-Please see the details in [tranforms](utils_datasets/transforms.py) that includes ```Data Normalization``` module having pre-defined mean and std values for each domain and channel, and ```Data Augmentation``` module for each dataset as follows (as the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation``` (but note that the it is all already set):
- - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (noramlization)
- - ```PovertyMapTransform()```: Transforms (Color jittering) for the Poverty Map dataset.
- - ```RxRx1Transform```: Transforms (RandAugment) for the RxRx1 dataset.
- - ```IWildCamTransform```Transforms (RandAugment) for the iWildCam dataset.
-2. 
+ 0. The ```fit()``` function is used to train the model using the given ```train_loader``` and ```valid_loader``` . The training is done using mini-batches of data. The ```fit()``` first initializes the ```optimizer``` and ```scheduler``` for the training process. Then it loops through the epochs of training and for each epoch, it loops through the mini-batches of data in the training data loader.
+ 1. For each mini-batch of data, the fuction **InputTransforms** first provides data-specific nomalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset. Please see the details in [tranforms](utils_datasets/transforms.py) that includes ```Data Normalization``` module having pre-defined mean and std values for each domain and channel, and ```Data Augmentation``` module for each dataset as follows (as the hyperparameters, we can select wheter we are going to perform augmentation or not with the bool type variable of ```args.augmentation``` (but note that the it is all already set):
+  - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (noramlization)
+  - ```PovertyMapTransform()```: Transforms (Color jittering) for the Poverty Map dataset.
+  - ```RxRx1Transform```: Transforms (RandAugment) for the RxRx1 dataset.
+  - ```IWildCamTransform```Transforms (RandAugment) for the iWildCam dataset.
+ 2. For each transformed mini-batch of data, the model is trained using loss function of each task (classification, regression, and multiclass classification). After the training of the model, the method calculates the loss and AUC score for the validation data using the trained model. The loss and scores (F1 score and accuracy for the classifier, and pearsonr for the regressor) for both training and validation data are stored in the ```train_loss_traj```, ```valid_loss_traj```, ```train_score_traj```, and ```valid_score_traj``` lists. The code also stores the model's parameters that produce the lowest validation loss and the highest validation accuracy. 
+ 3. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
+ 4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
 
 
-3. 
 ### **4. Evaluation**
-This section evaluates the trained model on the validation and test sets. The evaluate function calculates the accuracy, F1 score, and AUROC score of the model on the validation and test sets.
+This section evaluates the trained model on the training, validation and test data. 
 
-- The results of this code are as follows:
+- For tabular data, the code calculates the AUC score for each doamin in the test dataset and records the scores for all domains. The DataFrame is then saved to a CSV file in the ./results/prediction/ directory. Additionally, the mean score for internal, external, and all sites is calculated and included in the DataFrame.
+
+- For image data, the ```prediction()``` function calculates the AUC score, F1 score, and accuracy for the train, validation, and test sets. The scores are recorded in a pandas DataFrame and saved to a CSV file in the [results](./results/prediction/) directory.
+
+- ```plots_loss()``` generates a plot of the training loss for each domain in a different color, and 
+
+- ```plots_probit()``` generates a plot (histogram) of the distribution of the selection probits for each domain. This function uses ```model.get_selection_probit()``` function that can yield the probits.
+
+The results and plots are saved to the [results](./results/) directory, with the filenames containing the name of the algorithm used (HeckmanDG) and the type of data (```args.data```) and here are the examples:
   - plots of the training loss [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf)
   - plots of the probits [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf)
   - AUC scores [prediction results](results/prediction/HeckmanDG_camelyon17.csv)
 
-- From the function of **plots_loss**, we can see the following [learning curve](results/plots/HeckmanDG_camelyon17_loss.pdf). The x-axis represents the epoch, and the y-axes are loss, auroc, and rho trajectory in the training process.
-
-<!-- ![image](https://user-images.githubusercontent.com/36376255/229378713-62511fcb-be4a-4973-a6e5-21029765d3fa.png) -->
-
-- From the function of **plots_probit**, we can see the [histogram](results/plots/HeckmanDG_camelyon17_probits.pdf) that represents the distribution of probits for each domain. Please refer to the function of **model.get_selection_probit** yields the probits.
-
-<!-- ![image](https://user-images.githubusercontent.com/36376255/229378704-24477849-d9ce-49c7-bf0a-97724fcd7c81.png) -->
-
-
 <!-- 
- **IMAGE**: The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
+![image](https://user-images.githubusercontent.com/36376255/229378704-24477849-d9ce-49c7-bf0a-97724fcd7c81.png) 
 
-The **args** contains the name of data, backbone, and hyperparameters (learning rate, etc.). For the WILDS data, the data-specific arguments are already set.
+![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
+
+<img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
+
+This figure represents hyperparameters of the two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
+-->
 
 
+<!-- NOTES
+**IMAGE**: The WILDS data basically require a large computing memory for the training step. If you want to test this code with the smaller size of data (subsets of the original data), please add (or uncomment) the following code at lines 50 to 54.
 
 **Three prediction tasks**: (1) binary classification (Camelyon17), (2) multicalss classification(iWildCam, RxRx1), and regression (PovertyMap), on WILDS benchmark data as follows:
 - Camelyon17: Binary (tumor) classification.
 - iWildCam: multiclass (animal species) classification. (In preparation)
 - RxRx1: multiclass (genetic treatments) classification. (In preparation)
 - PovertyMap: Regression (wealth index prediction). (In preparation)
-
-In addition, this repository provides the data-specific normalization and augmentation functions as follows:
-
-### WILDS benchmark
-
-Summary of the four datasets from the WILDS benchmark. 
-![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
-
-<img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
-
-This figure represents hyperparameters of the two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
-
-#### With your own data
-
-- To input your own image data, you need to customize the preprocessing code in the 
 
 ## References
 Please refer to the following papers to set hyperparameters and reproduce experiments on the WILDS benchmark.
