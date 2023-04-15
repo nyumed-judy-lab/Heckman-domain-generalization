@@ -82,22 +82,35 @@ For the tabular data, the function ```dataset = DatasetImporter(args)``` reads t
 
 The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
 
-****************************************
+
 DOMAIN GENERALIZATION
 HOW does User specify
 HOW does Repo specify
 
-+ add detailed exap
++ add detailed explatnation
 + 10 domains
 + domain generalization
+
+
+If you want to apply your own data, please specifiy  to 
 ```train_domains``` = ```[domain1, domain 2, or 3]```
 ```valid_domains``` = ```[domain1, domain 9]```
 ```test_domains``` = ```[domain 10]```
+
+In the training process, specified ```train_domains``` are used to calculate loss and update parameters by gradient descent method.
+The data of ```train_domains``` is split into 
+
 # training domians: 1, 2, 3 -> training_data / validation_data (hold_out)
 # testing domians: 4
 # int validation: socre on testing of domain 1, 2, 3
 # ext nvalidation: socre on testing of domain 4
-What dataset need to be uploaded
+# What dataset need to be uploaded
+
+
+During the training processs, ```valid_domains``` are also used to calculate loss and evaluated the updated paramemters  to calculate loss 
+
+In the evaluation process, Internal and Exterenal valiration
+
 
 ****************************************
 
