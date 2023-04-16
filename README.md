@@ -80,7 +80,7 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 
 - IMPORT DATA: For the tabular data, the function ```dataset = DatasetImporter(args)``` reads the ```dataset.feather``` file and then the imported dataset is separated the numerical and categorical columns. 
 
-- DOMAIN-GENERALIZATION EXPERIEMNT SETTING: lease creates a list of domains to use for training the model e.g. ```train_domains = ['domain 1', ..., 'domain K']```. For the INSIGHT data, the list of ```train_domains``` is already set as ```['A05', 'A07', 'B03', 'C05']```. The next codes ```args.train_domains = train_domains``` and ```args.num_domains = len(train_domains)``` set the values of the ```train_domains``` and ```num_domains``` variable in the ```args``` namespace.
+- DOMAIN-GENERALIZATION EXPERIEMNT SETTING: please creates a list of domains to use for training the model e.g. ```train_domains = ['domain 1', ..., 'domain K']```. For the INSIGHT data, the list of ```train_domains``` is already set as ```['A05', 'A07', 'B03', 'C05']```. The next codes ```args.train_domains = train_domains``` and ```args.num_domains = len(train_domains)``` set the values of the ```train_domains``` and ```num_domains``` variable in the ```args``` namespace.
 
 For the tabular data, this repository performs in-distribution (ID) validation for the model selection in the training process and internal/external validations for the model evaluation in the tesing process. Hence, the validaation domains are equal to training domains and the testing domains are the rest domains differ from the training domains (for the external validation). Below is an example of domain sets if we have 5 differnt domains in data.
 
@@ -126,20 +126,25 @@ Then, the code split the data into training/validation/testing data stratiried b
 ]
 ```
 
-For the image data, the function ```dataset = DatasetImporter(args)``` reads the data and it has data-speficic modules:
+- IMPORT DATA: For the image data, the function ```dataset = DatasetImporter(args)``` reads the data (```torch```) using data-speficic modules:
  - ```dataset = WildsCamelyonDataset()```
  - ```dataset = WildsPovertyMapDataset()```
  - ```dataset = WildsRxRx1Dataset()```
  - ```dataset = WildsIWildCamDataset()```
 
-The output ```datsets``` is put into the ```dataloaders(args, dataset)``` function and it then return  ```train_loader, valid_loader, test_loader``` to train the model with mini-batch data (subsets of data).
- 
+- DOMAIN-GENERALIZATION EXPERIEMNT SETTING: In the case of the image data, this repository performs external validation (doesn't perform internal validation). That is. testing data is the data of differnt domain from training domains) and the sets of doamins are already set. The data-import modules of ```Camelyon``` and ```Povertymap``` data requires specific training/validation/testing domains, e.g. ```dataset = WildsCamelyonDataset(root=args.root, train_domains=args.train_domains, validation_domains=args.validation_domains, test_domains=args.test_domains)```, ```dataset = WildsPovertyMapDataset(root=args.root, train_domains = get_countires(args.fold)[0], validation_domains = get_countires(args.fold)[1], test_domains = get_countires(args.fold)[2])```. The ```Povertymap``` data composed of five datasets; ```A: _SURVEY_NAMES_2009_17A, B: _SURVEY_NAMES_2009_17B, C: _SURVEY_NAMES_2009_17C , D: _SURVEY_NAMES_2009_17D, _SURVEY_NAMES_2009_17E```, so please set ```args.fold``` among the list of folds ```'A', 'B', 'C', 'D', 'E'```. The domain set of each dataset is determined by country informains (please see the module ```SinglePovertyMap```. For the ```RxRx1``` and ```iWildcam``` data, the training/validation/testing domains are set in each module as lists of string values (```_train_domains_str```, ```_validation_domains_str```, ```_test_domains_str```) and indices of domains (```train_mask, id_val_mask, ood_val_mask, test_mask(```) Please see the modules ```WildsRxRx1Dataset``` and ```WildsIWildCamDataset```. If you want to try another domain set, please modify ```train_domains, validation_domains, test_domain``` in the module ```Wilds{dataname}Dataset```. 
+
+Please note that for the image data, this repository performs the in-distribution (ID) validation for the selection model (g) selection and the out-of-distribution (OOD) validation for the outcome model (f) selection in the training process.
+
+The output ```dataset``` is put into the ```dataloaders(args, dataset)``` function and it then return  ```train_loader, valid_loader, test_loader``` to train the model with mini-batch data (subsets of data). 
+
 <!-- <img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
 
 This figure represents hyperparameters of the two-step optimization of the Heckman DG. Cells with two entries denote that we used different values for training domain selection and outcome models. In this repository, for the one-step optimization, we followed the hyperparameters of the outcome model.
 
 ![image](https://user-images.githubusercontent.com/36376255/226856940-2cca2f56-abee-46fa-9ec9-f187c6ac290b.png)
 -->
+
 ### **3. HeckmanDG**
 The code imports two neural network architectures: ```HeckmanDNN``` and ```HeckmanCNN```. These architectures are used to create the network used by the models. The code also imports several models (```HeckmanDG_DNN_BinaryClassifier```, ```HeckmanDG_CNN_BinaryClassifier```, ```HeckmanDG_CNN_Regressor```, ```HeckmanDG_CNN_MultiClassifier```) which utilize the Heckman correction for domain generalization.
 
@@ -197,10 +202,10 @@ The initialized network is put into the following modules, and it is then define
 The model is trained on the training data using the ```fit``` function performing the following steps: 
  0. The ```fit()``` function is used to train the model using the given ```train_loader``` and ```valid_loader``` . The training is done using mini-batches of data. The ```fit()``` first initializes the ```optimizer``` and ```scheduler``` for the training process. Then it loops through the epochs of training, and for each epoch, it loops through the mini-batches of data in the training data loader.
  1. For each mini-batch of data, the function **InputTransforms** first provides data-specific normalization and augmentation modules. The input and output of the function is the raw image dataset and the normalized and augmented dataset. Please see the details in [tranforms](utils_datasets/transforms.py) that include ```Data Normalization``` module having pre-defined mean and std values for each domain and channel, and ```Data Augmentation``` module for each dataset as follows (as the hyperparameters, we can select whether we are going to perform augmentation or not with the bool type variable of ```args.augmentation``` (but note that it is all already set):
-  - ```Camelyon17Transform```: Transforms for the Camelyon17 dataset. (normalization)
-  - ```PovertyMapTransform()```: Transforms (Color jittering) for the Poverty Map dataset.
+  - ```Camelyon17Transform```: Transforms (normalization) for the Camelyon17 dataset. 
+  - ```PovertyMapTransform```: Transforms (Color jittering) for the Poverty Map dataset.
   - ```RxRx1Transform```: Transforms (RandAugment) for the RxRx1 dataset.
-  - ```IWildCamTransform```Transforms (RandAugment) for the iWildCam dataset.
+  - ```IWildCamTransform```: Transforms (RandAugment) for the iWildCam dataset.
  2. For each transformed mini-batch of data, the model is trained using the loss function of each task (classification, regression, and multiclass classification). After the training of the model, the method calculates the loss and AUC score for the validation data using the trained model. The loss and scores (F1 score and accuracy for the classifier, and Pearson for the regressor) for both training and validation data are stored in the ```train_loss_traj```, ```valid_loss_traj```, ```train_score_traj```, and ```valid_score_traj``` lists. The code also stores the model's parameters that produce the lowest validation loss and the highest validation accuracy. 
  3. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
  4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
@@ -208,7 +213,7 @@ The model is trained on the training data using the ```fit``` function performin
 ### **4. Evaluation**
 This section evaluates the trained model on the training, validation, and test data. 
 
-- For tabular data, the code calculates the AUC score for each domain in the test dataset and records the scores for all domains. The DataFrame is then saved to a CSV file in the ./results/prediction/ directory. The mean score for internal, external, and all sites are also calculated and included in the DataFrame.
+- For tabular data, this repository calculates the AUC score for each domain in the test dataset and records the scores for all domains. The DataFrame is then saved to a CSV file in the ./results/prediction/ directory. The mean score for internal, external, and all sites are also calculated and included in the DataFrame.
 +++++ save prediction results (output of the model)
 
 - For image data, the ```prediction()``` function calculates the AUC score, F1 score, and accuracy for the train, validation, and test sets. The scores are recorded in a pandas DataFrame and saved to a CSV file in the [results](./results/prediction/) directory.
