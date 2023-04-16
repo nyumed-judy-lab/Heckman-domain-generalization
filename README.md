@@ -78,45 +78,23 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 [10, 10, 10],]
 ```
 
-For the tabular data, the function ```dataset = DatasetImporter(args)``` reads the ```dataset.feather``` file and then the imported dataset is separated the numerical and categorical columns. 
+- IMPORT DATA: For the tabular data, the function ```dataset = DatasetImporter(args)``` reads the ```dataset.feather``` file and then the imported dataset is separated the numerical and categorical columns. 
 
-The list of ```train_domains``` has to be set manually e,g, ```['domain1', 'domain2', 'domain3', 'domain4']``` then the code sets the number of domains and split the data into training/validation/testing data stratiried by domain memberships.
+- DOMAIN-GENERALIZATION EXPERIEMNT SETTING: lease creates a list of domains to use for training the model e.g. ```train_domains = ['domain 1', ..., 'domain K']```. For the INSIGHT data, the list of ```train_domains``` is already set as ```['A05', 'A07', 'B03', 'C05']```. The next codes ```args.train_domains = train_domains``` and ```args.num_domains = len(train_domains)``` set the values of the ```train_domains``` and ```num_domains``` variable in the ```args``` namespace.
 
+For the tabular data, this repository performs in-distribution (ID) validation for the model selection in the training process and internal/external validations for the model evaluation in the tesing process. Hence, the validaation domains are equal to training domains and the testing domains are the rest domains differ from the training domains (for the external validation). Below is an example of domain sets if we have 5 differnt domains in data.
 
-DOMAIN GENERALIZATION
-HOW does User specify
-HOW does Repo specify
-
-+ add detailed explatnation
-+ 10 domains
-+ domain generalization
+- ```train_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (user specifies)
+- ```valid_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (repo specifies)
+- ```test_domains``` = ```[domain 5]``` (repo specifies)
 
 
-If you want to apply your own data, please specifiy  to 
-```train_domains``` = ```[domain1, domain 2, or 3]```
-```valid_domains``` = ```[domain1, domain 9]```
-```test_domains``` = ```[domain 10]```
+Then, the code split the data into training/validation/testing data stratiried by domain memberships.
 
-In the training process, specified ```train_domains``` are used to calculate loss and update parameters by gradient descent method.
-The data of ```train_domains``` is split into 
-
-# training domians: 1, 2, 3 -> training_data / validation_data (hold_out)
-# testing domians: 4
-# int validation: socre on testing of domain 1, 2, 3
-# ext nvalidation: socre on testing of domain 4
-# What dataset need to be uploaded
+- ```train_val_dat, test_dat = train_test_split(dataset, stratify=dataset['SITE']+dataset['CVD'].astype(str), test_size=args.test_size, random_state=args.seed)```: Splits the dataset into training/validation and testing dataset using the ```train_test_split``` function. The ```stratify``` parameter ensures that the proportions (```args.test_size = 0.8```) of each domain and target (e.g. CVD) label are roughly equal in both the training/validation and testing dataset.
 
 
-During the training processs, ```valid_domains``` are also used to calculate loss and evaluated the updated paramemters  to calculate loss 
-
-In the evaluation process, Internal and Exterenal valiration
-
-
-****************************************
-
-
-
-The ```precessed_data=preprocessing_tabular(datset)``` function then split the data into training and validation sets and applies **scaling** and **imputation** to the numerical (continuous) variables. 
+- ```tr_x, tr_s, tr_y, val_x, val_s, val_y, num_imputer, scaler = preprocessing_tabular(train_val_dat, args, num_cols, cat_cols)```: ```preprocessing_tabular``` has also the function ```train_test_split``` that splits ```train_val_dat``` into ```train_dat, val_dat```. The training and validation sets are then put into the modules of **scaling** and **imputation**. The function finally returns preprocessed data (tr_x, tr_s, tr_y, val_x, val_s, val_y) as well as a fitted numerical ```imputer``` and ```scaler``` for use in preprocessing the test set. Below is  how the preprocessing is performed:
 
 **1. Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
   1. ```scaler.fit(x_train)```: Calculate each feature's mean and standard deviation (column) in the training data.
