@@ -3,16 +3,13 @@ This repository provides the PyTorch implementation of Heckman DG. Need to first
 
 ## **Installation**
 Before running the code in this repository, you will need to install the required dependencies listed in [requirements.txt](requirements.txt). This file contains the names and versions of all libraries that we have to install. We mainly use PyTorch backend libraries, and the following versions are recommended:
-- torch==1.10.0
-- torchaudio==0.10.0
-- torchmetrics==0.11.1
-- torchvision==0.11.0
 
 To install these dependencies, simply run the following command:
 
 ```bash
-pip install -r ./requirements.txt 
-conda install -f ./requirements.txt
+conda install pytorch==1.10.0 torchvision==0.11.0 torchaudio==0.10.0 cudatoolkit=10.2 -c pytorch
+conda install anaconda
+pip install ray
 ```
 
 ## **Data Preparation**
