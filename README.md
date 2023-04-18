@@ -50,7 +50,7 @@ This section imports the necessary **Modules** and data-specific **Arguments**.
   - [x]  1. HeckmanDG_DNN_BinaryClassifier (tabular)
   - [x]  2. HeckmanDG_CNN_BinaryClassifier (image)
   - [x]  3. HeckmanDG_CNN_Regressor (image)
-  - [x]  4. HeckmanDG_CNN_MultiClassifier (image) + model selection framework
+  - [x]  4. HeckmanDG_CNN_MultiClassifier (image) (+ model selection framework)
 - [x]  4. Evaluation
   - [x]  Classification: Accuracy, F1 score, AUROC scores of Training, Validation, and Testing data
   - [x]  Regression: MSE, MAE, Pearsonr scores of Training, Validation, and Testing data
