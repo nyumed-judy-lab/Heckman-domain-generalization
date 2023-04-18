@@ -136,6 +136,15 @@ E - - - - -
  - PovertyMap: ```dataset = WildsPovertyMapDataset()``` -> Regression (wealth index prediction).
  - RxRx1: ```dataset = WildsRxRx1Dataset()``` -> multiclass (genetic treatments) classification.
  - iWildCam: ```dataset = WildsIWildCamDataset()``` -> multiclass (animal species) classification. 
+  - in the one-step: (2), (3) CLASSIFICATION
+   - (2) ood validation to select model (g and f) ***** w=0.0 (id validatino proprotion)
+   - (3) ood validation w=0.5
+   - validaion_loss, accuracy() f1_score (rxrx1, iwildcam) #, 
+
+  - in the one-step: (2), (3) REGRESSION
+   - (2) ood validation to select model (g and f) ***** w=0.0 (id validatino proprotion)
+   - (3) ood validation w=0.5
+   - validaion_loss(f&g), pearson #,(or mse, mae)  
 
 - DOMAIN-GENERALIZATION EXPERIMENT SETTING: In the case of the image data, this repository performs external validation (doesn't perform internal validation). That is. testing data is the data of different domains from training domains) and the sets of domains are already set. The data-import modules of ```Camelyon``` and ```Povertymap``` data requires specific training/validation/testing domains, e.g. ```dataset = WildsCamelyonDataset(root=args.root, train_domains=args.train_domains, validation_domains=args.validation_domains, test_domains=args.test_domains)```, ```dataset = WildsPovertyMapDataset(root=args.root, train_domains = get_countires(args.fold)[0], validation_domains = get_countires(args.fold)[1], test_domains = get_countires(args.fold)[2])```. The ```Povertymap``` data is composed of five datasets; ```A: _SURVEY_NAMES_2009_17A, B: _SURVEY_NAMES_2009_17B, C: _SURVEY_NAMES_2009_17C , D: _SURVEY_NAMES_2009_17D, _SURVEY_NAMES_2009_17E```, so please set ```args.fold``` among the list of folds ```'A', 'B', 'C', 'D', 'E'```. The domain set of each dataset is determined by country information (please see the module ```SinglePovertyMap```. For the ```RxRx1``` and ```iWildcam``` data, the training/validation/testing domains are set in each module as lists of string values (```_train_domains_str```, ```_validation_domains_str```, ```_test_domains_str```) and indices of domains (```train_mask, id_val_mask, ood_val_mask, test_mask(```) Please see the modules ```WildsRxRx1Dataset``` and ```WildsIWildCamDataset```. If you want to try another domain set, please modify ```train_domains, validation_domains, test_domain``` in the module ```Wilds{dataname}Dataset```. 
 
