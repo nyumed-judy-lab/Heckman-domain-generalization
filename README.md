@@ -7,6 +7,10 @@ Before running the code in this repository, you will need to install the require
 To install these dependencies, simply run the following command:
 
 ```bash
+pip install -r ./requirements.txt
+
+OR
+
 conda install pytorch==1.10.0 torchvision==0.11.0 torchaudio==0.10.0 cudatoolkit=10.2 -c pytorch
 conda install anaconda
 pip install ray
@@ -75,21 +79,18 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 [10, 10, 10],]
 ```
 
-- IMPORT DATA: For the tabular data, the function ```dataset = DatasetImporter(args)``` reads the ```dataset.feather``` file and then the imported dataset is separated the numerical and categorical columns. 
+- For the tabular data, the function ```dataset = DatasetImporter(args)``` reads the ```dataset.feather``` file and then the imported dataset is separated the numerical and categorical columns. 
 
-- DOMAIN-GENERALIZATION EXPERIEMNT SETTING: please creates a list of domains to use for training the model e.g. ```train_domains = ['domain 1', ..., 'domain K']```. For the INSIGHT data, the list of ```train_domains``` is already set as ```['A05', 'A07', 'B03', 'C05']```. The next codes ```args.train_domains = train_domains``` and ```args.num_domains = len(train_domains)``` set the values of the ```train_domains``` and ```num_domains``` variable in the ```args``` namespace.
+- For the DOMAIN-GENERALIZATION EXPERIEMNT SETTING, please creates a list of domains to use for training the model e.g. ```train_domains = ['domain 1', ..., 'domain K']```. For the INSIGHT data, the list of ```train_domains``` is already set as ```['A05', 'A07', 'B03', 'C05']```. The next codes ```args.train_domains = train_domains``` and ```args.num_domains = len(train_domains)``` set the values of the ```train_domains``` and ```num_domains``` variable in the ```args``` namespace.
 
-For the tabular data, this repository performs in-distribution (ID) validation for the model selection in the training process and internal/external validations for the model evaluation in the tesing process. Hence, the validaation domains are equal to training domains and the testing domains are the rest domains differ from the training domains (for the external validation). Below is an example of domain sets if we have 5 differnt domains in data.
-
-- ```train_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (user specifies)
-- ```valid_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (repo specifies)
-- ```test_domains``` = ```[domain 5]``` (repo specifies)
-
+- For the tabular data, this repository performs in-distribution (ID) validation for the model selection in the training process and internal/external validations for the model evaluation in the tesing process. Hence, the validaation domains are equal to training domains and the testing domains are the rest domains differ from the training domains (for the external validation). Below is an example of domain sets if we have 5 differnt domains in data.
+ - ```train_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (user specifies)
+ - ```valid_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (repo specifies)
+ - ```test_domains``` = ```[domain 5]``` (repo specifies)
 
 Then, the code split the data into training/validation/testing data stratiried by domain memberships.
 
-- ```train_val_dat, test_dat = train_test_split(dataset, stratify=dataset['SITE']+dataset['CVD'].astype(str), test_size=args.test_size, random_state=args.seed)```: Splits the dataset into training/validation and testing dataset using the ```train_test_split``` function. The ```stratify``` parameter ensures that the proportions (```args.test_size = 0.8```) of each domain and target (e.g. CVD) label are roughly equal in both the training/validation and testing dataset.
-
+- ```train_val_dat, test_dat = train_test_split(dataset, stratify=dataset['SITE']+dataset['CVD'].astype(str), test_size=args.test_size, random_state=args.seed)```: Splits the dataset into training/validation and testing dataset using the ```train_test_split``` function. The ```stratify``` parameter ensures that the proportions (```args.test_size = 0.8```) of each domain and target (e.g. CVD) label are roughly equal in the training/validation and testing dataset.
 
 - ```tr_x, tr_s, tr_y, val_x, val_s, val_y, num_imputer, scaler = preprocessing_tabular(train_val_dat, args, num_cols, cat_cols)```: ```preprocessing_tabular``` has also the function ```train_test_split``` that splits ```train_val_dat``` into ```train_dat, val_dat```. The training and validation sets are then put into the modules of **scaling** and **imputation**. The function finally returns preprocessed data (tr_x, tr_s, tr_y, val_x, val_s, val_y) as well as a fitted numerical ```imputer``` and ```scaler``` for use in preprocessing the test set. Below is  how the preprocessing is performed:
 
@@ -123,17 +124,17 @@ Then, the code split the data into training/validation/testing data stratiried b
 ]
 ```
 
-- IMPORT DATA: For the image data, the function ```dataset = DatasetImporter(args)``` reads the data (```torch```) using data-speficic modules:
+- For the image data, the function ```dataset = DatasetImporter(args)``` reads the data (```torch```) using data-speficic modules:
  - Camelyon17: ```dataset = WildsCamelyonDataset()```-> Binary (tumor) classification.
  - PovertyMap: ```dataset = WildsPovertyMapDataset()``` -> Regression (wealth index prediction).
  - RxRx1: ```dataset = WildsRxRx1Dataset()``` -> multiclass (genetic treatments) classification.
  - iWildCam: ```dataset = WildsIWildCamDataset()``` -> multiclass (animal species) classification. 
 
-- DOMAIN-GENERALIZATION EXPERIEMNT SETTING: In the case of the image data, this repository performs external validation (doesn't perform internal validation). That is. testing data is the data of differnt domain from training domains) and the sets of doamins are already set. The data-import modules of ```Camelyon``` and ```Povertymap``` data requires specific training/validation/testing domains, e.g. ```dataset = WildsCamelyonDataset(root=args.root, train_domains=args.train_domains, validation_domains=args.validation_domains, test_domains=args.test_domains)```, ```dataset = WildsPovertyMapDataset(root=args.root, train_domains = get_countires(args.fold)[0], validation_domains = get_countires(args.fold)[1], test_domains = get_countires(args.fold)[2])```. The ```Povertymap``` data composed of five datasets; ```A: _SURVEY_NAMES_2009_17A, B: _SURVEY_NAMES_2009_17B, C: _SURVEY_NAMES_2009_17C , D: _SURVEY_NAMES_2009_17D, _SURVEY_NAMES_2009_17E```, so please set ```args.fold``` among the list of folds ```'A', 'B', 'C', 'D', 'E'```. The domain set of each dataset is determined by country informains (please see the module ```SinglePovertyMap```. For the ```RxRx1``` and ```iWildcam``` data, the training/validation/testing domains are set in each module as lists of string values (```_train_domains_str```, ```_validation_domains_str```, ```_test_domains_str```) and indices of domains (```train_mask, id_val_mask, ood_val_mask, test_mask(```) Please see the modules ```WildsRxRx1Dataset``` and ```WildsIWildCamDataset```. If you want to try another domain set, please modify ```train_domains, validation_domains, test_domain``` in the module ```Wilds{dataname}Dataset```. 
+- DOMAIN-GENERALIZATION EXPERIMENT SETTING: In the case of the image data, this repository performs external validation (doesn't perform internal validation). That is. testing data is the data of different domains from training domains) and the sets of domains are already set. The data-import modules of ```Camelyon``` and ```Povertymap``` data requires specific training/validation/testing domains, e.g. ```dataset = WildsCamelyonDataset(root=args.root, train_domains=args.train_domains, validation_domains=args.validation_domains, test_domains=args.test_domains)```, ```dataset = WildsPovertyMapDataset(root=args.root, train_domains = get_countires(args.fold)[0], validation_domains = get_countires(args.fold)[1], test_domains = get_countires(args.fold)[2])```. The ```Povertymap``` data is composed of five datasets; ```A: _SURVEY_NAMES_2009_17A, B: _SURVEY_NAMES_2009_17B, C: _SURVEY_NAMES_2009_17C , D: _SURVEY_NAMES_2009_17D, _SURVEY_NAMES_2009_17E```, so please set ```args.fold``` among the list of folds ```'A', 'B', 'C', 'D', 'E'```. The domain set of each dataset is determined by country information (please see the module ```SinglePovertyMap```. For the ```RxRx1``` and ```iWildcam``` data, the training/validation/testing domains are set in each module as lists of string values (```_train_domains_str```, ```_validation_domains_str```, ```_test_domains_str```) and indices of domains (```train_mask, id_val_mask, ood_val_mask, test_mask(```) Please see the modules ```WildsRxRx1Dataset``` and ```WildsIWildCamDataset```. If you want to try another domain set, please modify ```train_domains, validation_domains, test_domain``` in the module ```Wilds{dataname}Dataset```. 
 
 Please note that for the image data, this repository performs the in-distribution (ID) validation for the selection model (g) selection and the out-of-distribution (OOD) validation for the outcome model (f) selection in the training process.
 
-The output ```dataset``` is put into the ```dataloaders(args, dataset)``` function and it then return  ```train_loader, valid_loader, test_loader``` to train the model with mini-batch data (subsets of data). 
+The output ```dataset``` is put into the ```dataloaders(args, dataset)``` function, and it then returns ```train_loader, valid_loader, test_loader``` to train the model with mini-batch data (subsets of data). 
 
 <!-- <img width="837" alt="hyperparameters" src="https://user-images.githubusercontent.com/36376255/229375372-3b3bd721-b5f2-405a-9f5e-02966dc20cd6.png">
 
@@ -150,7 +151,7 @@ We first initialize the neural networks (NNs) and then run the Heckman DG model.
 #### **3.1 Tabular Data**
 For the tabular data, the code (1) creates a ```HeckmanDNN``` network with the specified layers, and (2) trains a ```HeckmanDG_DNN_BinaryClassifier``` model on the data. The model is trained using the ```fit``` function with the specified training and validation data.
 
-##### **3.1.1 Initiailize the Network**: 
+#### **3.1.1 Initiailize the Network**: 
 The ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the selection model (g_layers) and outcome model (f_layers). Please put the number of nodes and layers to construct them like ```HeckmanDNN(f_network_structure, f_network_structure)```.  The initialized network is put into the ```HeckmanDG_DNN_BinaryClassifier(network)```.
 
   - ```f_network_structure```: The first and last layers has to be composed of the number of neurons equal to the number of columns and the number of training domains in data (e,g, ```[tr_x.shape[1], 64, 32, 16, args.num_domains]```.)
@@ -169,7 +170,7 @@ The ```network = HeckmanDNN(args)``` is defined. The **HeckmanDNN** contains the
     - ```forward_f```: takes an input tensor x and returns the output of the DNN for the outcome model.
     - ```forward_g```: takes an input tensor x and returns the output of the DNN for the selection model. 
 
-##### **3.1.2. Train the model** 
+#### **3.1.2. Train the model** 
 The ```HeckmanDG_DNN_BinaryClassifier(network, optimizer, and scheduler)``` model is then defined with the network, optimizer, and scheduler as input, and the model is trained on the training data using the ```fit``` function.  The ```HeckmanDG_DNN_BinaryClassifier``` class takes four parameters as input: (1) ```network```, (2) ```optimizer```, (3) ```scheduler```, and (4) ```config```.
  - ```network```: the deep neural network that is used to perform the classification task
  - ```optimizer```: the optimizer used for backpropagation and gradient descent during training
@@ -206,17 +207,40 @@ The model is trained on the training data using the ```fit``` function performin
  3. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
  4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
 
+#### **3.1.3. Model selection ** 
+
+In the HeckmanDG on image data, we seperately select the best parameters of selection model (g) and outcome model (f). The selection model is selected by
+data-specific evaluation metric (user can select the metric among accuracy or f1 score) and the outcome model is selected by task-specific evalauation metric (user cfan select the user can select the metric among accuracy or f1 score in the classification and mse, mae, or pearson coefficient in the regression task. All metrics are aleady set by recommended evaluation metric in ICLR paper, and user can select in [args.model_selection_metric]. After the model selection, we combine the f and g networks as one model.
+
+In the HeckmanDG framework for image data, the selection (g) and outcome (f) models are separately optimized to select the best parameters for each model. The selection model is chosen based on a data-specific evaluation metric that the user can choose from among accuracy or F1 score. The outcome model is selected based on a task-specific evaluation metric that the user can choose from among accuracy or F1 score for classification tasks, or MSE, MAE, or Pearson coefficient for regression tasks. This repo follows the set of evaluation metrics recommended in the ICLR paper. The user can specify their desired evaluation metric using the ```args.model_selection_metric```.
+
+Once the selection and outcome models are optimized, the ```f``` and ```g``` networks are combined into a single model.
+
+- **selection model (g) **
+ - epoch 1 - F1: 0.5
+ - epoch 2 - F1: 0.7
+ - epoch 3 - F1: 0.5
+ - epoch 4 - F1: 0.7
+ - epoch 5 - F1: 0.9 -> best model
+
+- **outcome model (f) **
+ - epoch 1 - F1: 0.5
+ - epoch 2 - F1: 0.7
+ - epoch 3 - F1: 0.9 -> best model
+ - epoch 4 - F1: 0.7
+ - epoch 5 - F1: 0.5
+
 ### **4. Evaluation**
 This section evaluates the trained model on the training, validation, and test data. 
 
-- For tabular data, the internal and external validations are performed. The functiton ```model.predict_proba(x)``` yields prediction results of the trained model. The prediction performance (AUC score; using the function ```roc_auc_socre(pred_y)```) for each domain in the test dataset is then calculated. They are summarized as mean scores for internal, external, and all domains . The prediction results and performances are then saved to CSV files in the [results][./results/prediction/] directory. 
+- For tabular data, the internal and external validations are performed. The functiton ```model.predict_proba(x)``` yields prediction results of the trained model. The prediction performance (AUC score; using the function ```roc_auc_socre()```) for each domain in the test dataset is then calculated. They are summarized as mean scores for internal, external, and all domains . The prediction results and performances are then saved to CSV files in the [results][./results/prediction/] directory. 
 
 - For image data, the external validation is performed. The function ```model.predict(x)``` predicts the class (multi-class, continuous labels) in the the binary classification (multiclass classification, regression). The shape of the prediction results would be as follows:
  - Binary Classification: (N, 1) 
  - Multiclass Classification: (N, J) -> In multinomial classification, the probability scores represent the probability of the observation belonging to each of the mutually exclusive classes, and the sum of the probabilities for all classes is 1.
  - Regression: (N, 1) 
 
-- The ```prediction()``` function calculates the classificatin performances (AUC score, F1 score, and accuracy) and regression performances (MSE, MAE, Pearson coefficient) for the training/validation/testing data.  The prediction results and performances are then saved to CSV files in the [results][./results/prediction/] directory. 
+- The ```prediction()``` function calculates the classificatin performances (AUC score (```roc_auc_score()```), F1 score(```f1_socre()```), and accuracy(```accuracy_score()```)) and regression performances (MSE, MAE, Pearson coefficient) for the training/validation/testing data.  The prediction results and performances are then saved to CSV files in the [results][./results/prediction/] directory. 
 
 - For all ```data_type```, the ```plots_loss()``` generates a plot of the training loss for each domain in a different color. The ```plots_probit()``` generates a plot (histogram) of the distribution of the selection probits for each domain. This function uses ```model.get_selection_probit()``` function that can yield the probits.
 
