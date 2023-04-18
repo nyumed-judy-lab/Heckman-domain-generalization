@@ -41,8 +41,6 @@ class TabularSelfAttention(nn.Module):
         outputs = torch.matmul(weights, v).view(batch_size, -1)
         return outputs
 
-
-
 class DecisionTree(nn.Module):
     def __init__(self, input_size, output_size):
         super(DecisionTree, self).__init__()

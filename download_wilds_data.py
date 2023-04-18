@@ -9,11 +9,10 @@ import os
 import argparse
 import wilds
 
-
 SUPPORTED_WILDS_DATASETS = [
-    # 'iwildcam',
-    # 'camelyon17',
+    'camelyon17',
     'poverty',
+    'iwildcam',
     'rxrx1',
 ]
 assert all([s in wilds.supported_datasets for s in SUPPORTED_WILDS_DATASETS])

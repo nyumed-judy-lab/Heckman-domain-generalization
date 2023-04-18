@@ -27,7 +27,6 @@ class ConvBackboneBase(nn.Module):
     def num_parameters(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
-
 class Flatten(nn.Module):
     def __init__(self):
         super(Flatten, self).__init__()

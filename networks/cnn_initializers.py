@@ -31,38 +31,38 @@ class NetworkInitializer(object):
     ]
 
     _in_channels: typing.Dict[str, int] = {
+        'camelyon17': 3, #####
+        'poverty': 8,
+        'iwildcam': 3,
+        'rxrx1': 3,
+        'insight': 1,
         'rmnist': 1,
         'cmnist': 3,
         'pacs': 3, #####
         'vlcs': 3, #####
         'vlcs_ood': 3, #####
-        'camelyon17': 3, #####
         'camelyon17_ece': 3, #####
-        'rxrx1': 3,
-        'poverty': 8,
         'poverty_ece': 8,
         'celeba': 3,
-        'insight': 1,
-        'iwildcam': 3,
         'fmow': 3,
     }
 
     _out_features: typing.Dict[str, typing.Tuple[int, str]] = {
-        'rmnist': (10, 'multiclass'),
-        'cmnist': (1, 'binary'),
-        'pacs': (7, 'multiclass'), #####
-        'vlcs': (5, 'multiclass'), #####
-        'vlcs_ood': (5, 'multiclass'), #####
         'camelyon17': (1, 'binary'),
-        'camelyon17_ece': (1, 'binary'),
-        'rxrx1': (1139, 'multiclass'),
         'poverty': (1, 'regression'),
-        'poverty_ece': (1, 'regression'),
-        'celeba': (1, 'binary'),
-        'insight': (1, 'binary'),
-        'civilcomments': (1, 'binary'),
+        'rxrx1': (1139, 'multiclass'),
         'iwildcam': (182, 'multiclass'),
-        'fmow': (62, 'multiclass'),
+        'insight': (1, 'binary'),
+        # 'rmnist': (10, 'multiclass'),
+        # 'cmnist': (1, 'binary'),
+        # 'pacs': (7, 'multiclass'), #####
+        # 'vlcs': (5, 'multiclass'), #####
+        # 'vlcs_ood': (5, 'multiclass'), #####
+        # 'camelyon17_ece': (1, 'binary'),
+        # 'poverty_ece': (1, 'regression'),
+        # 'celeba': (1, 'binary'),
+        # 'civilcomments': (1, 'binary'),
+        # 'fmow': (62, 'multiclass'),
     }
     
     @classmethod
@@ -90,18 +90,18 @@ class NetworkInitializer(object):
         in_channels: int = cls._in_channels[data]
         if name.startswith('resnet'):
             return ResNetBackbone(name=name, in_channels=in_channels, pretrained=pretrained)
-        elif name.startswith('wideresnet'):
-            raise NotImplementedError("Work in progress.")
         elif name.startswith('densenet'):
             return DenseNetBackbone(name=name, in_channels=in_channels, pretrained=pretrained)
+        elif name.startswith('wideresnet'):
+            raise NotImplementedError("Work in progress.")
         else:
             raise ValueError("Only supports {cnn, resnet, wideresnet, densenet}-based models.")
 
-    @classmethod
-    def initialize_bert_backbone(cls, name: str, **kwargs) -> nn.Module:
-        if name not in ['distilbert-base-uncased', ]:
-            raise NotImplementedError
-        return DistilBertBackbone(name=name)
+    # @classmethod
+    # def initialize_bert_backbone(cls, name: str, **kwargs) -> nn.Module:
+    #     if name not in ['distilbert-base-uncased', ]:
+    #         raise NotImplementedError
+    #     return DistilBertBackbone(name=name)
 
     @classmethod
     def initialize_linear_output_layer(cls, data: str, backbone: nn.Module, add_features: int = 0) -> nn.Module:
@@ -257,8 +257,6 @@ class DenseNetBackbone(ConvBackboneBase):
     @property
     def out_features(self) -> int:
         return self.out_channels
-    
-
 
 class ResNetBackbone(ConvBackboneBase):
     def __init__(self,

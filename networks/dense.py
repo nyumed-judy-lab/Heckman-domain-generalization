@@ -32,38 +32,7 @@ class BasicNetwork(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
-
-
-class SharedHeckmanNetwork(nn.Module):
-    def __init__(self, layers,
-                 activation=default_activation,
-                 dropout=default_dropout,
-                 batchnorm=default_batchnorm,
-                 bias=default_bias):
-
-        super(SharedHeckmanNetwork, self).__init__()
-        activation = getattr(nn, activation)
-
-        _layers = []
-        for d, (units_in, units_out) in enumerate(zip(layers, layers[1:])):
-            _layers.append(nn.Linear(units_in, units_out, bias=bias))
-            if d < len(layers) - 2:
-                if batchnorm:
-                    _layers.append(nn.BatchNorm1d(units_out))
-                _layers.append(activation())
-                if dropout:
-                    _layers.append(nn.Dropout(dropout))
-
-        self.layers = nn.Sequential(*_layers)
-        self.rho = nn.Parameter(torch.zeros(layers[-1]-1, dtype=torch.float), requires_grad=True)
-        self.register_parameter(name='rho', param=self.rho)
-
-    def forward(self, x):
-        return self.layers(x)
-
-
-
-class SeparatedHeckmanNetwork(nn.Module):
+class HeckmanDNN(nn.Module):
     def __init__(self, f_layers, g_layers,
                  activation=default_activation,
                  dropout=default_dropout,
@@ -71,7 +40,7 @@ class SeparatedHeckmanNetwork(nn.Module):
                  bias=default_bias
                  ):
 
-        super(SeparatedHeckmanNetwork, self).__init__()
+        super(HeckmanDNN, self).__init__()
         activation = getattr(nn, activation)
 
         _layers = []
