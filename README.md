@@ -84,15 +84,22 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 - For the DOMAIN-GENERALIZATION EXPERIEMNT SETTING, please creates a list of domains to use for training the model e.g. ```train_domains = ['domain 1', ..., 'domain K']```. For the INSIGHT data, the list of ```train_domains``` is already set as ```['A05', 'A07', 'B03', 'C05']```. The next codes ```args.train_domains = train_domains``` and ```args.num_domains = len(train_domains)``` set the values of the ```train_domains``` and ```num_domains``` variable in the ```args``` namespace.
 
 - For the tabular data, this repository performs in-distribution (ID) validation for the model selection in the training process and internal/external validations for the model evaluation in the tesing process. Hence, the validaation domains are equal to training domains and the testing domains are the rest domains differ from the training domains (for the external validation). Below is an example of domain sets if we have 5 differnt domains in data.
- - ```train_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (user specifies)
- - ```valid_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (repo specifies)
- - ```test_domains``` = ```[domain1, domain 2, domain 3, domain 4 (internal validation), domain 5 (external validation)]``` (repo specifies)
+ - ```train_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (user specifies) 80 100%
+ - ```valid_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (repo specifies) 20 100%
+ - ```test_domains``` = ``` domain 5 (external validation)]``` (repo specifies) 100%
 
 Then, the code split the data into training/validation/testing data stratiried by domain memberships.
 
-- ```train_val_dat, test_dat = train_test_split(dataset, stratify=dataset['SITE']+dataset['CVD'].astype(str), test_size=args.test_size, random_state=args.seed)```: Splits the dataset into training/validation and testing dataset using the ```train_test_split``` function. The ```stratify``` parameter ensures that the proportions (```args.test_size = 0.8```) of each domain and target (e.g. CVD) label are roughly equal in the training/validation and testing dataset.
+- ```train_val_dat, test_dat = train_test_split(dataset, stratify=dataset['SITE']+dataset['CVD'].astype(str), test_size=args.test_size, random_state=args.seed)```: Splits the dataset into training/validation and testing dataset using the ```train_test_split``` function. The ```stratify``` parameter ensures that the proportions (```args.test_size = 0.2```) of each domain and target (e.g. CVD) label are roughly equal in the training/validation and testing dataset.
 
 - ```tr_x, tr_s, tr_y, val_x, val_s, val_y, num_imputer, scaler = preprocessing_tabular(train_val_dat, args, num_cols, cat_cols)```: ```preprocessing_tabular``` has also the function ```train_test_split``` that splits ```train_val_dat``` into ```train_dat, val_dat```. The training and validation sets are then put into the modules of **scaling** and **imputation**. The function finally returns preprocessed data (tr_x, tr_s, tr_y, val_x, val_s, val_y) as well as a fitted numerical ```imputer``` and ```scaler``` for use in preprocessing the test set. Below is  how the preprocessing is performed:
+
+  A B C D E INT EXT ALL DIFF
+A - - - - -
+B - - - - -
+C - - - - -
+D - - - - -
+E - - - - -
 
 **1. Standardization**: ```scaler = StandardScaler()``` transforms the input data into a mean of zero and a standard deviation of one. To apply standardization to the training, validation, and testing data, you would need to follow these steps:
   1. ```scaler.fit(x_train)```: Calculate each feature's mean and standard deviation (column) in the training data.
@@ -223,6 +230,21 @@ args.model_selection_type = option 1 or option 2
 
 trainig domains: 1,2,3,4
 testing domains: 1,2,3,4 (internal), 5 (external)
+
+
+******************** scenario 2: (W proportion of id validation): HOW Much user want to weight (0~1) : 0.5 
+- trained model -> mean of internal loss (id-validation): 1 * w mean of extenal loss (ood-validation): 5  * (1-w)
+validtion mean of ex and in: 3
+(1000,1000,1000,6000,1000)
+
+********** scenario 1: 
+- 80 training domains
+- id+ood validation
+- interal validation
+
+*********** scenario 3: dont use split
+- 100% training
+- ood validation
 
 
 sc1: 80%/20% (training(validation)/testing) model (g&f) combined datset(ID+OOD)
