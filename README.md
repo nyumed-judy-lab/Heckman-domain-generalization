@@ -86,7 +86,7 @@ This repository provides HeckmanDG for two data types, including (1) tabular, an
 - For the tabular data, this repository performs in-distribution (ID) validation for the model selection in the training process and internal/external validations for the model evaluation in the tesing process. Hence, the validaation domains are equal to training domains and the testing domains are the rest domains differ from the training domains (for the external validation). Below is an example of domain sets if we have 5 differnt domains in data.
  - ```train_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (user specifies)
  - ```valid_domains``` = ```[domain1, domain 2, domain 3, domain 4]``` (repo specifies)
- - ```test_domains``` = ```[domain 5]``` (repo specifies)
+ - ```test_domains``` = ```[domain1, domain 2, domain 3, domain 4 (internal validation), domain 5 (external validation)]``` (repo specifies)
 
 Then, the code split the data into training/validation/testing data stratiried by domain memberships.
 
@@ -216,19 +216,36 @@ In the HeckmanDG framework for image data, the selection (g) and outcome (f) mod
 
 Once the selection and outcome models are optimized, the ```f``` and ```g``` networks are combined into a single model.
 
-- **selection model (g) **
+args.model_selection_type = option 1 or option 2
+- USER1: trainig doamins, testing domains (option 1-current)
+- USER2: trainig domains, id-domains, ood domains, testing domains (option 2: )
+ - domain 1, domain 2, domain 3, (training, id validaiotn) domain 4 (ood), domain 5 (testing)
+
+trainig domains: 1,2,3,4
+testing domains: 1,2,3,4 (internal), 5 (external)
+
+
+sc1: 80%/20% (training(validation)/testing) model (g&f) combined datset(ID+OOD)
+sc2: 
+sc3: clear but sensitive (
+
+
+
+- **selection model (g) ** ID validation ** domain prediction
  - epoch 1 - F1: 0.5
  - epoch 2 - F1: 0.7
  - epoch 3 - F1: 0.5
  - epoch 4 - F1: 0.7
- - epoch 5 - F1: 0.9 -> best model
+ - epoch 5 - F1: 0.9 -> best model (g_hat)
 
-- **outcome model (f) **
+- **outcome model (f) ** OOD validation ** outfome prediction
  - epoch 1 - F1: 0.5
  - epoch 2 - F1: 0.7
- - epoch 3 - F1: 0.9 -> best model
+ - epoch 3 - F1: 0.9 -> best model (f_hat)
  - epoch 4 - F1: 0.7
  - epoch 5 - F1: 0.5
+
+
 
 ### **4. Evaluation**
 This section evaluates the trained model on the training, validation, and test data. 
