@@ -23,34 +23,50 @@ def loss_regression(self,
     epsilon: float = 1e-5
     normal = torch.distributions.Normal(loc=0., scale=1.)
     loss = 0.
-    y_true = y
-    y_pred = batch_probits_f
+    y_true = y.clone()
+    y_pred = batch_probits_f.clone()
+    
     for k in range(self.args.num_domains):
         # k=0
-        s_true = s[:,k]
-        s_pred = batch_probits_g[:,k]
+        s_true = s[:,k].clone()
+        s_pred = batch_probits_g[:,k].clone()
         rho = self.network.rho[k]
         sigma = self.network.sigma
+        # s_true = s[:,k]
+        # rho = network.rho[k] # rho.shape
+        # sigma = network.sigma
+        # sigma.shape
 
         # Equation 19 - 2
         # A) Selection loss for unselected (unlabeled) individuals: (N,  ); Loss takes value of zero for S=1
-        loss_not_selected = - (1 - s_true) * torch.log(1 - normal.cdf(s_pred) + epsilon)
-        
+        loss_not_selected = (1 - s_true) * torch.log(normal.cdf(-s_pred) + epsilon)
+        if False:
+            loss_not_selected = - (1 - s_true) * torch.log(1 - normal.cdf(s_pred) + epsilon)
         # Equation 19 - 1 - 1
         # B) Selection loss for selected (labeled) individuals: (N,  )
-        probit_loss = - torch.log(
+        probit_loss = torch.log(
             normal.cdf(
                 (s_pred + rho * (y_true - y_pred).div(sigma)).div(torch.sqrt(1 - rho ** 2))
             ) + epsilon
         )
+        if False:
+            probit_loss = - torch.log(
+                normal.cdf(
+                    (s_pred + rho * (y_true - y_pred).div(sigma)).div(torch.sqrt(1 - rho ** 2))
+                ) + epsilon
+            )
         # Equation 19 - 1 - 2
         # C) Regression loss for selected individuals: (N,  )
-        regression_loss = 0.5 * (
-            torch.log(2 * torch.pi * (sigma ** 2)) \
-                + F.mse_loss(y_pred, y_true, reduction='none').div(sigma ** 2)
-        )
+        regression_loss = -0.5*(torch.log(2 * torch.pi * (sigma ** 2))) -0.5*(((y_pred - y_true).div(sigma))**2)
+        if False:
+            regression_loss = 0.5 * (
+                torch.log(2 * torch.pi * (sigma ** 2)) \
+                    + F.mse_loss(y_pred, y_true, reduction='none').div(sigma ** 2)
+            )
         # Equation 19 
-        loss += (loss_not_selected + s_true * (probit_loss + regression_loss)).mean()
+        loss += ((-1 * loss_not_selected) + (-1 * s_true * (probit_loss + regression_loss))).mean()
+        if False:
+            loss += (loss_not_selected + s_true * (probit_loss + regression_loss)).mean()
         return loss
     
 class HeckmanDG_CNN_Regressor:
@@ -115,6 +131,7 @@ class HeckmanDG_CNN_Regressor:
         best_model, best_loss, best_metric = deepcopy(self.network.state_dict()), 1e10, 0.0
         if self.args.model_selection_metric=='mae' or self.args.model_selection_metric=='mse':
             print('mse or mae')
+            # if args.model_selection_metric=='mae' or args.model_selection_metric=='mse':
             best_metric = 1e10
         else:
             pass
@@ -475,7 +492,7 @@ class HeckmanDG_CNN_Regressor:
             x = self.eval_transform(x.to(torch.uint8))
         x = x.float().to(torch.float32)
         with torch.no_grad():
-            y_pred_batch = self.network.forward_f(x.to(self.args.device))[:, 0]
+            y_pred_batch = self.network.forward_f(x.to(self.args.device))
             # network.forward_f(x.cpu())[:,0]
         y_pred_batch = y_pred_batch.detach().cpu().numpy()
         return y_pred_batch
@@ -489,7 +506,7 @@ class HeckmanDG_CNN_Regressor:
                 x = self.eval_transform(x.to(torch.uint8))
             x = x.float().to(torch.float32)
             with torch.no_grad():
-                y_pred_batch = self.network.forward_f(x.to(self.args.device))[:, 0]
+                y_pred_batch = self.network.forward_f(x.to(self.args.device))
                 y_pred_list.append(y_pred_batch)
         y_preds = torch.cat(y_pred_list).detach().cpu().numpy()
 
