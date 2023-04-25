@@ -1,0 +1,2 @@
+,data,train_mse,train_mae,train_pearson,id_valid_mse,id_valid_mae,id_valid_pearson,ood_valid_mse,ood_valid_mae,ood_valid_pearson,test_mse,test_mae,test_pearson
+0,poverty,1.008,0.842,0.177,1.035,0.86,0.156,0.962,0.854,0.114,0.827,0.776,0.21

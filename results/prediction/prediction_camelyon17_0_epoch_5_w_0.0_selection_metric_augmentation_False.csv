@@ -1,0 +1,2 @@
+,data,train_acc,train_f1,valid_id_acc,valid_id_f1,valid_ood_acc,valid_ood_f1,test_f1,test_acc
+0,camelyon17,0.992,0.992,0.987,0.845,0.926,0.544,0.842,0.623
