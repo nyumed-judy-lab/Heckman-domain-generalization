@@ -1,7 +1,7 @@
 #%% Modules
 import os
-import os
 import torch
+import pickle
 import argparse
 import numpy as np
 import pandas as pd
@@ -14,11 +14,10 @@ from scipy.stats import pearsonr
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, mean_squared_error
 
 from functools import partial
+from functools import partial
 from itertools import combinations
 import matplotlib.pyplot as plt
 
-#%% 1. Experiment Settings
-# from utils_datasets.defaults import DataDefaults
 from utils.argparser import DatasetImporter, parse_arguments
 from utils.argparser import args_insight
 from utils.argparser import args_cameloyn17, args_poverty, args_iwildcam, args_rxrx1
@@ -28,18 +27,22 @@ from utils.seed import fix_random_seed
 os.makedirs('./results', exist_ok=True)
 os.makedirs('./results/plots/', exist_ok=True)
 os.makedirs('./results/prediction/', exist_ok=True)
+os.makedirs('./results/models/', exist_ok=True)
 
 #%% 1. Experiment Settings
 # from utils_datasets.defaults import DataDefaults
-
-def data_argument(args, data_name):
+def data_argument(args, data_name, fold: str=None):
     if data_name == 'insight':
         args = args_insight()
-    if data_name == 'camelyon17':
+    elif data_name == 'camelyon17':
         args = args_cameloyn17(args) # data-specific arguments 
     elif data_name == 'poverty':
         args = args_poverty(args) # data-specific arguments 
-        
+        args.fold_list = ['A', 'B', 'C', 'D', 'E']        
+        if fold is not None:
+            args.fold = fold
+        else:
+            args.fold_list[0] #fold #'A'
     elif data_name == 'rxrx1':
         args = args_rxrx1(args) # data-specific arguments 
     elif data_name == 'iwildcam':
@@ -48,93 +51,171 @@ def data_argument(args, data_name):
         print("choose the data_name among ('camelyon17', 'camelyon17_ece', 'poverty', 'rxrx1', 'iwildcam')")
     return args
 
+if False:
+    data_name_list = ['insight', 'camelyon17', 'iwildcam', 'poverty', 'rxrx1']
+    data_name_list = ['rxrx1']
+    for data_name in data_name_list:
+        # data_name = 'rxrx1',  #'insight', 'camelyon17', 'iwildcam', 'poverty', 'iwildcam'
+        experiment_name = 'Heckman DG'
+        args = parse_arguments(experiment_name) # basic arguments for image data
+        args = data_argument(args, data_name)
+        dataset = DatasetImporter(args)
+        args.num_domains = len(dataset.train_domains) 
+        print(args.num_domains)
+
 data_name = 'poverty'  #'insight', 'camelyon17', 'iwildcam', 'poverty', 'iwildcam'
 experiment_name = 'Heckman DG'
 args = parse_arguments(experiment_name) # basic arguments for image data
 args = data_argument(args, data_name)
 
-import pickle
-if False:
-    dataset = DatasetImporter(args)
-    # save the batch using pickle
-    with open(f'./data/examples/dataset_{args.data}.pkl', 'wb') as f:
-        pickle.dump(dataset, f)
+########################################
+seeds = [0,1,2,3,4,5,6,7,8,9]
+id_proportion = [0.0, 0.5, 1.0]
+id_proportion = [0.0, 0.5]
+model_selection_list = ['loss', 'metric']
+folds = ['A', 'B', 'C', 'D', 'E']
+folds = ['E',
+         'D', 
+         'C', 
+         'B', 
+         'A', 
+         ]
+# '''
+# args.pretrained = True
+# '''
+args.epochs = 10
 
-if True:        
-    with open(f'./data/examples/dataset_{args.data}.pkl', 'rb') as f:
-        dataset = pickle.load(f)    
-    # (1) run the experiment with all data to test the implementation of HeckmanDG (take large amount of memory)
-    train_loader, id_valid_loader, ood_valid_loader, test_loader = dataloaders(args, dataset)
-    # (2) run the experiment with subset of data to test the implementation of HeckmanDG (take small amount of memory)
-    if True:
-        train_loader, id_valid_loader, ood_valid_loader, test_loader = sub_dataloaders(train_loader, id_valid_loader, ood_valid_loader, test_loader)
-if False:
-    batch = next(iter(train_loader))
-    # save the batch using pickle
-    with open(f'./data/examples/batch_{args.data}.pkl', 'wb') as f:
-        pickle.dump(batch, f)
-if True:
-    with open(f'./data/examples/batch_{args.data}.pkl', 'rb') as f:
-        batch = pickle.load(f)    
+for seed in seeds:
+    for fold in folds:
+        args = data_argument(args, data_name, fold)
+        for w in id_proportion:
+            for selection in model_selection_list:
+                args.seed = seed # 0.5 # id_proportion
+                args.w = w # 0.5 # id_proportion
+                args.model_selection = selection #'loss'#, 'metric'
+                result_name = f'{args.data}_{args.fold}_{args.seed}_w_{args.w}_selection_{args.model_selection}'
+                result_name = f'{args.data}_{args.fold}_{args.seed}_w_{args.w}_selection_{args.model_selection}_e_{args.epochs}_pre_{args.pretrained}'
+                fix_random_seed(args.seed)
+                # args.epochs = 2
+                # args.w =  0.5 # id_proportion
+                # args.model_selection = 'loss'#, 'metric'
+                ########################################
 
-setattr(args, 'train_domains', dataset.train_domains)
-setattr(args, 'validation_domains', dataset.validation_domains)
-setattr(args, 'test_domains', dataset.test_domains)
-setattr(args, 'num_domains', len(dataset.train_domains))
+                if True:
+                    dataset = DatasetImporter(args)
+                    # save the batch using pickle
+                    with open(f'./data/examples/dataset_{args.data}_{args.fold}.pkl', 'wb') as f:
+                        pickle.dump(dataset, f)
+                if False:
+                    with open(f'./data/examples/dataset_{args.data}_{args.fold}.pkl', 'rb') as f:
+                        dataset = pickle.load(f)    
+                # (1) run the experiment with all data to test the implementation of HeckmanDG (take large amount of memory)
+                train_loader, id_valid_loader, ood_valid_loader, test_loader = dataloaders(args, dataset)
+                # (2) run the experiment with subset of data to test the implementation of HeckmanDG (take small amount of memory)
+                if False:
+                    result_name = result_name+'_example'
+                    train_loader, id_valid_loader, ood_valid_loader, test_loader = sub_dataloaders(train_loader, id_valid_loader, ood_valid_loader, test_loader)
+                if False:
+                    batch = next(iter(train_loader))
+                    batch_id = next(iter(id_valid_loader))
+                    batch_ood = next(iter(ood_valid_loader))
+                    # save the batch using pickle
+                    with open(f'./data/examples/batch_{args.data}.pkl', 'wb') as f:
+                        pickle.dump(batch, f)
+                    with open(f'./data/examples/batch_id_{args.data}.pkl', 'wb') as f:
+                        pickle.dump(batch_id, f)
+                    with open(f'./data/examples/batch_ood_{args.data}.pkl', 'wb') as f:
+                        pickle.dump(batch_ood, f)
+                if False:
+                    with open(f'./data/examples/batch_{args.data}.pkl', 'rb') as f:
+                        batch = pickle.load(f)    
 
+                setattr(args, 'train_domains', dataset.train_domains)
+                setattr(args, 'validation_domains', dataset.validation_domains)
+                setattr(args, 'test_domains', dataset.test_domains)
+                setattr(args, 'num_domains', len(dataset.train_domains))
 
-#%% Intialize network, models
-from networks import HeckmanDNN, HeckmanCNN 
-import torch.nn.functional as F
-from models.heckmandg_regression import HeckmanDG_CNN_Regressor
-network = HeckmanCNN(args)
+                #%% Intialize network, models
+                from networks import HeckmanDNN, HeckmanCNN 
+                network = HeckmanCNN(args)
+                if args.loss_type == 'regression':
+                    param_groups = [
+                        {'params': network.f_layers.parameters()},
+                        {'params': network.g_layers.parameters()},
+                        {'params': network.rho},
+                        {'params': network.sigma}
+                    ]
+                else:
+                    param_groups = [
+                    {'params': network.f_layers.parameters()},
+                    {'params': network.g_layers.parameters()},
+                    {'params': network.rho}
+                    ]
 
-if args.loss_type == 'regression':
-    param_groups = [
-        {'params': network.f_layers.parameters()},
-        {'params': network.g_layers.parameters()},
-        {'params': network.rho},
-        {'params': network.sigma}
-    ]
-else:
-    param_groups = [
-    {'params': network.f_layers.parameters()},
-    {'params': network.g_layers.parameters()},
-    {'params': network.rho}
-    ]
-optimizer = torch.optim.SGD(param_groups, lr=args.lr, weight_decay=args.weight_decay)
-model = HeckmanDG_CNN_Regressor(args, network, optimizer)
-model.fit(train_loader, id_valid_loader, ood_valid_loader)
+                #%% HeckmanDG
+                import tqdm
+                from copy import deepcopy
+                import torch.nn.functional as F
+                from utils_datasets.transforms import InputTransforms
+                from networks import HeckmanDNN, HeckmanCNN 
+                from models.heckmandg_regression import HeckmanDG_CNN_Regressor
+                from models.heckmandg_binaryclass import HeckmanDG_CNN_BinaryClassifier
+                from models.heckmandg_multiclass import HeckmanDG_CNN_MultiClassifier
+                optimizer = torch.optim.SGD(param_groups, lr=args.lr, weight_decay=args.weight_decay)
+                scheduler = None
+                if args.loss_type == 'binary':
+                    model = HeckmanDG_CNN_BinaryClassifier(args, network, optimizer)
+                elif args.loss_type == 'regression':
+                    # args.epochs = 4
+                    model = HeckmanDG_CNN_Regressor(args, network, optimizer)
+                elif args.loss_type == 'multiclass':
+                    model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer)
+                model.fit(train_loader, id_valid_loader, ood_valid_loader)
+                torch.save(model.network.state_dict(), f'./results/models/{args.data}_{args.seed}_w_{args.w}_selection_{args.model_selection}_model.pth')
 
-torch.save(model.network.state_dict(), f'./results/{args.data}_{args.seed}_model.pth')
+                if False:
+                    # load the model
+                    network = HeckmanCNN(args)
+                    optimizer = torch.optim.SGD(param_groups, lr=args.lr, weight_decay=args.weight_decay)
+                    if args.loss_type == 'binary':
+                        model = HeckmanDG_CNN_BinaryClassifier(args, network, optimizer)
+                    elif args.loss_type == 'regression':
+                        model = HeckmanDG_CNN_Regressor(args, network, optimizer)
+                    elif args.loss_type == 'multiclass':
+                        model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer)
+                    # Load the saved model state dictionary
+                    state_dict = torch.load(f'./results/{result_name}_model.pth')
+                    # Load the saved state dictionary into the model
+                    model.network.load_state_dict(state_dict)
 
-#%% 4. Results Analysis
-from utils.result import prediction, plots_loss, plots_probit
+                #%% 4. Results Analysis
+                from utils.result import prediction, plots_loss_id_ood, plots_loss, plots_probit
+                # prediction results
+                res_tr = prediction(train_loader, model, args)
+                res_vl_id = prediction(id_valid_loader, model, args)
+                res_vl_ood = prediction(ood_valid_loader, model, args)
+                res_ts = prediction(test_loader, model, args)
 
-res_tr = prediction(train_loader, model, args)
-res_vl = prediction(id_valid_loader, model, args)
-res_vl = prediction(id_valid_loader, model, args)
-res_ts = prediction(test_loader, model, args)
+                res_tr_mean = pd.DataFrame(res_tr).mean().round(3)
+                res_id_vl_mean = pd.DataFrame(res_vl_id).mean().round(3)
+                res_ood_vl_mean = pd.DataFrame(res_vl_ood).mean().round(3)
+                res_ts_mean = pd.DataFrame(res_ts).mean().round(3)
 
-res_tr_mean = pd.DataFrame(res_tr).mean().round(3)
-res_vl_mean = pd.DataFrame(res_vl).mean().round(3)
-res_ts_mean = pd.DataFrame(res_ts).mean().round(3)
+                results = np.concatenate((np.array([f'{args.data}']), res_tr_mean.values, res_id_vl_mean.values, res_ood_vl_mean.values, res_ts_mean.values))
+                results = pd.DataFrame([results])
+                ##### regression columns
+                results.columns = ['data', 
+                                   'train_mse', 'train_mae', 'train_pearson',
+                                   'id_valid_mse', 'id_valid_mae', 'id_valid_pearson',
+                                   'ood_valid_mse', 'ood_valid_mae', 'ood_valid_pearson',
+                                    'test_mse', 'test_mae', 'test_pearson']
+                results.to_csv(f'./results/prediction/prediction_{result_name}.csv')
+                print(results)
 
-results = np.concatenate((np.array([f'{args.data}']), res_tr_mean.values, res_vl_mean.values, res_ts_mean.values))
-results = pd.DataFrame([results])
-if args.loss_type == 'regression':
-    results.columns = ['data', 
-                    'train_mse', 'train_mae', 'train_pearson',
-                    'valid_mse', 'valid_mae', 'valid_pearson',
-                    'test_mse', 'test_mae', 'test_pearson']
-else:
-    results.columns = ['data', 
-                        'train_auc', 'train_f1', 'train_acc',
-                        'valid_auc', 'valid_f1', 'valid_acc',
-                        'test_auc', 'test_f1', 'test_acc']
-
-print(results)
-if args.data == 'poverty':
-    results.to_csv(f'./results/prediction/HeckmanDG_{args.data}_{args.fold}.csv')
-else:
-    results.to_csv(f'./results/prediction/HeckmanDG_{args.data}.csv')
+                # plots: loss, probits
+                try:
+                    probits, labels = model.get_selection_probit(train_loader)
+                    plots_loss_id_ood(model, args, path=f"./results/plots/loss_{result_name}.pdf")
+                    plots_probit(probits, labels, args, path=f"./results/plots/probits_{result_name}.pdf")
+                except ValueError:
+                    print('no plots')

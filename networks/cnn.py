@@ -51,7 +51,7 @@ class HeckmanCNN(nn.Module):
             self.rho = nn.Parameter(torch.zeros(K, dtype=torch.float), requires_grad=True)
         # self.register_parameter(name='rho', param=self.rho)
         # Sigma (regression only if )
-        if args.loss_type == 'regression':
+        if self.args.loss_type == 'regression':
             self.sigma = nn.Parameter(torch.ones(1, device=self.args.device), requires_grad=True)
         
         self.temperature: typing.Union[torch.FloatTensor, float] = 1.0

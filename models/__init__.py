@@ -1,3 +1,5 @@
-from .heckmandg import TwoStepHeckmanDGBinaryClassifier
-from .heckmandg import HeckmanDGBinaryClassifier, HeckmanDGBinaryClassifierCNN
+from .heckmandg_binaryclass import HeckmanDG_DNN_BinaryClassifier, HeckmanDG_CNN_BinaryClassifier
+from .heckmandg_regression import HeckmanDG_CNN_Regressor
+from .heckmandg_multiclass import HeckmanDG_CNN_MultiClassifier
+from .heckmandg_twostep import TwoStepHeckmanDGBinaryClassifier
 from .plain import ProbitBinaryClassifier
