@@ -74,16 +74,17 @@ id_proportion = [0.0, 0.5, 1.0]
 id_proportion = [0.0, 0.5]
 model_selection_list = ['loss', 'metric']
 folds = ['A', 'B', 'C', 'D', 'E']
+
+'''
 folds = ['E',
          'D', 
          'C', 
          'B', 
          'A', 
          ]
-# '''
-# args.pretrained = True
-# '''
+args.pretrained = True
 args.epochs = 10
+'''
 
 for seed in seeds:
     for fold in folds:
