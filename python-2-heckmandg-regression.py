@@ -75,16 +75,15 @@ id_proportion = [0.0, 0.5]
 model_selection_list = ['loss', 'metric']
 folds = ['A', 'B', 'C', 'D', 'E']
 
-'''
-folds = ['E',
-         'D', 
-         'C', 
-         'B', 
-         'A', 
-         ]
-args.pretrained = True
-args.epochs = 10
-'''
+if False:
+    folds = ['E',
+            'D', 
+            'C', 
+            'B', 
+            'A', 
+            ]
+    args.pretrained = True
+    args.epochs = 30
 
 for seed in seeds:
     for fold in folds:
@@ -93,7 +92,7 @@ for seed in seeds:
             for selection in model_selection_list:
                 args.seed = seed # 0.5 # id_proportion
                 args.w = w # 0.5 # id_proportion
-                args.model_selection = selection #'loss'#, 'metric'
+                args.model_selection = selection #args.model_selection = 'loss'#, 'metric'
                 result_name = f'{args.data}_{args.fold}_{args.seed}_w_{args.w}_selection_{args.model_selection}'
                 result_name = f'{args.data}_{args.fold}_{args.seed}_w_{args.w}_selection_{args.model_selection}_e_{args.epochs}_pre_{args.pretrained}'
                 fix_random_seed(args.seed)
@@ -172,7 +171,7 @@ for seed in seeds:
                 elif args.loss_type == 'multiclass':
                     model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer)
                 model.fit(train_loader, id_valid_loader, ood_valid_loader)
-                torch.save(model.network.state_dict(), f'./results/models/{args.data}_{args.seed}_w_{args.w}_selection_{args.model_selection}_model.pth')
+                torch.save(model.network.state_dict(), f'./results/models/{args.data}_{args.fold}_{args.seed}_w_{args.w}_selection_{args.model_selection}_model.pth')
 
                 if False:
                     # load the model
@@ -185,6 +184,7 @@ for seed in seeds:
                     elif args.loss_type == 'multiclass':
                         model = HeckmanDG_CNN_MultiClassifier(args, network, optimizer)
                     # Load the saved model state dictionary
+                    # path = 'results/models/poverty_A_0_w_0.0_selection_loss_model.pth'
                     state_dict = torch.load(f'./results/{result_name}_model.pth')
                     # Load the saved state dictionary into the model
                     model.network.load_state_dict(state_dict)
@@ -192,31 +192,59 @@ for seed in seeds:
                 #%% 4. Results Analysis
                 from utils.result import prediction, plots_loss_id_ood, plots_loss, plots_probit
                 # prediction results
-                res_tr = prediction(train_loader, model, args)
-                res_vl_id = prediction(id_valid_loader, model, args)
-                res_vl_ood = prediction(ood_valid_loader, model, args)
-                res_ts = prediction(test_loader, model, args)
+                # res_tr = prediction(train_loader, model, args)
+                # res_vl_id = prediction(id_valid_loader, model, args)
+                # res_vl_ood = prediction(ood_valid_loader, model, args)
+                # res_ts = prediction(test_loader, model, args)
+                # res_tr_mean = pd.DataFrame(res_tr).mean().round(3)
+                # res_id_vl_mean = pd.DataFrame(res_vl_id).mean().round(3)
+                # res_ood_vl_mean = pd.DataFrame(res_vl_ood).mean().round(3)
+                # res_ts_mean = pd.DataFrame(res_ts).mean().round(3)
+                # results = np.concatenate((np.array([f'{args.data}']), res_tr_mean.values, res_id_vl_mean.values, res_ood_vl_mean.values, res_ts_mean.values))
+                # results = pd.DataFrame([results])
+                # ##### regression columns
+                # results.columns = ['data', 
+                #                    'train_mse', 'train_mae', 'train_pearson',
+                #                    'id_valid_mse', 'id_valid_mae', 'id_valid_pearson',
+                #                    'ood_valid_mse', 'ood_valid_mae', 'ood_valid_pearson',
+                #                     'test_mse', 'test_mae', 'test_pearson']
+                # results.to_csv(f'./results/prediction/prediction_{result_name}.csv')
+                # print(results)
 
-                res_tr_mean = pd.DataFrame(res_tr).mean().round(3)
-                res_id_vl_mean = pd.DataFrame(res_vl_id).mean().round(3)
-                res_ood_vl_mean = pd.DataFrame(res_vl_ood).mean().round(3)
-                res_ts_mean = pd.DataFrame(res_ts).mean().round(3)
-
-                results = np.concatenate((np.array([f'{args.data}']), res_tr_mean.values, res_id_vl_mean.values, res_ood_vl_mean.values, res_ts_mean.values))
-                results = pd.DataFrame([results])
+                def pearson_all(model,data_loader):
+                    y_true_list = []
+                    y_pred_list = []
+                    for b, batch in enumerate(data_loader):
+                        print(f'loader {b} batch / {len(data_loader)}')
+                        y_true = batch['y']
+                        y_pred = model.predict(batch)
+                        if len(y_pred.shape)>1:
+                            y_pred = torch.Tensor(y_pred).squeeze()
+                        y_pred_list.append(y_pred)
+                        y_true_list.append(y_true)
+                    y_true_ = np.concatenate(y_true_list)
+                    y_pred_ = np.concatenate(y_pred_list)
+                    pearson = pearsonr(y_true_,y_pred_)[0] #.round(3)
+                    return  pearson
+                
+                res_tr_mean = pearson_all(model, train_loader)
+                res_id_vl_mean = pearson_all(model, id_valid_loader)
+                res_ood_vl_mean = pearson_all(model, ood_valid_loader)
+                res_ts_mean = pearson_all(model, test_loader)
+                results = pd.DataFrame([[f'{args.data}', res_tr_mean, res_id_vl_mean, res_ood_vl_mean, res_ts_mean]])
                 ##### regression columns
                 results.columns = ['data', 
-                                   'train_mse', 'train_mae', 'train_pearson',
-                                   'id_valid_mse', 'id_valid_mae', 'id_valid_pearson',
-                                   'ood_valid_mse', 'ood_valid_mae', 'ood_valid_pearson',
-                                    'test_mse', 'test_mae', 'test_pearson']
+                                   'train_pearson', 
+                                   'id_valid_pearson', 
+                                   'ood_valid_pearson',
+                                    'test_pearson']
                 results.to_csv(f'./results/prediction/prediction_{result_name}.csv')
                 print(results)
 
-                # plots: loss, probits
-                try:
-                    probits, labels = model.get_selection_probit(train_loader)
-                    plots_loss_id_ood(model, args, path=f"./results/plots/loss_{result_name}.pdf")
-                    plots_probit(probits, labels, args, path=f"./results/plots/probits_{result_name}.pdf")
-                except ValueError:
-                    print('no plots')
+                # # plots: loss, probits
+                # try:
+                #     probits, labels = model.get_selection_probit(train_loader)
+                #     plots_loss_id_ood(model, args, path=f"./results/plots/loss_{result_name}.pdf")
+                #     plots_probit(probits, labels, args, path=f"./results/plots/probits_{result_name}.pdf")
+                # except ValueError:
+                #     print('no plots')

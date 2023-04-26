@@ -371,8 +371,8 @@ class HeckmanDG_CNN_BinaryClassifier:
             # model_selection: loss
             print(self.args.model_selection)
             if self.args.model_selection == 'loss':
+                valid_loss = (self.args.w * valid_loss_id) + valid_loss_ood
                 valid_loss = (self.args.w * valid_loss_id) + ((1-self.args.w) * valid_loss_ood)
-                # valid_loss = (self.args.w * valid_loss_id) + valid_loss_ood
                 if valid_loss < best_loss:
                     best_model = deepcopy(self.network.state_dict())
                     best_loss = valid_loss
@@ -382,14 +382,14 @@ class HeckmanDG_CNN_BinaryClassifier:
             # model_selection: metric
             elif self.args.model_selection == 'metric':
                 if self.args.model_selection_metric=='auc':
-                    valid_metric = (self.args.w * auc_id) + ((1-self.args.w) * auc_ood)
                     valid_metric = (self.args.w * auc_id) + auc_ood
+                    valid_metric = (self.args.w * auc_id) + ((1-self.args.w) * auc_ood)
                 elif self.args.model_selection_metric=='f1':
-                    valid_metric = (self.args.w * f1_id) + ((1-self.args.w) * f1_ood)
                     valid_metric = (self.args.w * f1_id) + f1_ood
+                    valid_metric = (self.args.w * f1_id) + ((1-self.args.w) * f1_ood)
                 elif self.args.model_selection_metric=='accuracy':
-                    valid_metric = (self.args.w * acc_id) + ((1-self.args.w) * acc_ood)
                     valid_metric = (self.args.w * acc_id) + acc_ood
+                    valid_metric = (self.args.w * acc_id) + ((1-self.args.w) * acc_ood)
                 else:
                     print('choose auc, f1, or accuracy')
                 if valid_metric > best_metric:

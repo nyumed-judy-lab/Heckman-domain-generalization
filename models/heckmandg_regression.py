@@ -63,6 +63,7 @@ def loss_regression(self,
                 torch.log(2 * torch.pi * (sigma ** 2)) \
                     + F.mse_loss(y_pred, y_true, reduction='none').div(sigma ** 2)
             )
+            # _epsilon + sigma
         # Equation 19 
         loss += ((-1 * loss_not_selected) + (-1 * s_true * (probit_loss + regression_loss))).mean()
         if False:
@@ -372,8 +373,8 @@ class HeckmanDG_CNN_Regressor:
             # model_selection: loss
             print(self.args.model_selection)
             if self.args.model_selection == 'loss':
-                valid_loss = (self.args.w * valid_loss_id) + ((1-self.args.w) * valid_loss_ood)
                 valid_loss = (self.args.w * valid_loss_id) + valid_loss_ood
+                valid_loss = (self.args.w * valid_loss_id) + ((1-self.args.w) * valid_loss_ood)
                 if valid_loss < best_loss:
                     best_model = deepcopy(self.network.state_dict())
                     best_loss = valid_loss
@@ -383,8 +384,8 @@ class HeckmanDG_CNN_Regressor:
             # model_selection: metric
             elif self.args.model_selection == 'metric':
                 if self.args.model_selection_metric=='mse':
-                    valid_metric = (self.args.w * mse_id) + ((1-self.args.w) * mse_ood)
                     valid_metric = (self.args.w * mse_id) + mse_ood
+                    valid_metric = (self.args.w * mse_id) + ((1-self.args.w) * mse_ood)
                     if valid_metric < best_metric:
                         best_model = deepcopy(self.network.state_dict())
                         best_metric = valid_metric
@@ -392,8 +393,8 @@ class HeckmanDG_CNN_Regressor:
                     else:
                         pass
                 elif self.args.model_selection_metric=='mae':
-                    valid_metric = (self.args.w * mae_id) + ((1-self.args.w) * mae_ood)
                     valid_metric = (self.args.w * mae_id) + mae_ood
+                    valid_metric = (self.args.w * mae_id) + ((1-self.args.w) * mae_ood)
                     if valid_metric < best_metric:
                         best_model = deepcopy(self.network.state_dict())
                         best_metric = valid_metric
@@ -401,8 +402,8 @@ class HeckmanDG_CNN_Regressor:
                     else:
                         pass
                 elif self.args.model_selection_metric=='pearson':
-                    valid_metric = (self.args.w * pearson_id) + ((1-self.args.w) * pearson_ood)
                     valid_metric = (self.args.w * pearson_id) + pearson_ood
+                    valid_metric = (self.args.w * pearson_id) + ((1-self.args.w) * pearson_ood)
                     if valid_metric > best_metric:
                         best_model = deepcopy(self.network.state_dict())
                         best_metric = valid_metric
