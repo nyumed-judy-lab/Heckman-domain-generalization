@@ -22,12 +22,11 @@ def multiclass_classification_loss(self,
                                    rho: torch.FloatTensor,       # shape: (K, J+1)
                                    approximate: bool = False,    # logistic approx.
                                    **kwargs, ) -> torch.FloatTensor:
-    # args = self.args
-    # args.device = 'cpu'
     _eps: float = 1e-7
     _normal = torch.distributions.Normal(loc=0., scale=1.)
     _float_type = y_pred.dtype  # creating new tensors (in case of amp)
-    
+    # args = self.args
+    # args.device = 'cpu'
     # loss with logistic approximation available.
     # B = int(y_true.size(0))  # batch size
     # J = int(y_pred.size(1))  # number of classes
@@ -426,21 +425,17 @@ class HeckmanDG_CNN_MultiClassifier:
                 batch_probits_f = network.forward_f(x)
                 batch_probits_g = network.forward_g(x)
                 rho = network.rho # rho.shape == (K, J+1)
-                
-                
-                s_idx = list(range(len(args.train_domains)))
                 '''
 
                 if False:
                     # this is perforomed in the loss function
                     batch_prob_f = F.softmax(batch_probits_f, dim=1) #[0,:].sum()
                 
+                # y_true = y.clone()                      # y_true.shape == (B, J) 
+                # s_true = s.clone()                      # s_true.shape == (B, K)
+                y_pred = batch_probits_f.clone()        # y_pred.shape == (B, J) in probits
                 y_true = y_.clone()                     # y_true.shape == (B,)
                 s_true = s_.unsqueeze(-1).clone()       # s_true.shape == (B, 1)
-                
-                y_true = y.clone()                      # y_true.shape == (B, J) 
-                s_true = s.clone()                      # s_true.shape == (B, K)
-                y_pred = batch_probits_f.clone()        # y_pred.shape == (B, J) in probits
                 s_pred = batch_probits_g.clone()        # s_pred.shape == (B, K)
                 
                 assert rho.shape[1] == batch_probits_f.shape[1]+1
