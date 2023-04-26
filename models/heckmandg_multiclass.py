@@ -162,155 +162,149 @@ def multiclass_classification_loss(self,
     return torch.cat([loss_selected, loss_not_selected], dim=0).mean(), loss_selected.mean(), loss_not_selected.mean()
 
 
-def multiclass_classification_loss_(self,
-                                    y_pred: torch.FloatTensor,    # shape: (B, K)
-                                    y_true: torch.LongTensor,     # shape: (B)
-                                    s_pred: torch.FloatTensor,    # shape: (B, K)
-                                    s_true: torch.LongTensor,     # shape: (B, 1)
-                                    rho: torch.FloatTensor,       # shape: (K, J+1)
-                                    approximate: bool = False,    # logistic approx.
-                                    **kwargs, ) -> torch.FloatTensor:
-    ##################################################
-    args = self.args
+def _cross_domain_multiclass_classification_loss(#self,
+                                                    y_pred: torch.FloatTensor,
+                                                    y_true: torch.LongTensor,
+                                                    s_pred: torch.FloatTensor,
+                                                    s_true: torch.LongTensor,
+                                                    rho: torch.FloatTensor,       # shape; (N, J+1)
+                                                    approximate: bool = False,    # logistic approx.
+                                                    **kwargs, ) -> torch.FloatTensor:
+    """Multinomial loss with logistic approximation available."""
     '''
-    y_true = y_.clone()                     # y_true.shape == (B,)
-    s_true = s_.unsqueeze(-1).clone()       # s_true.shape == (B, 1)
-    y_pred = batch_probits_f.clone()        # y_pred.shape == (B, J) in probits
-    s_pred = batch_probits_g.clone()        # s_pred.shape == (B, K)
-    # y_true_ = y.clone()                      # y_true.shape == (B, J) 
-    # s_true_ = s.clone()                      # s_true.shape == (B, K)
-    # args.device = 'cpu'
+    y_pred=probits_or_resp,
+    y_true=target
+    s_pred=s_pred_in_probits
+    s_true=s_true_1d
+    rho=rho
+    approximate=True
+    '''
+    _eps: float = 1e-7
+    _normal = torch.distributions.Normal(loc=0., scale=1.)
+    _float_type = y_pred.dtype  # creating new tensors (in case of amp)
+
+    B = int(y_true.size(0))  # batch size
+    J = int(y_pred.size(1))  # number of classes
+    K = int(s_pred.size(1))  # number of (training) domains
+    s_pred_k = s_pred.gather(dim=1, index=s_true.to(int))
     
-    '''
-    B = y_true.shape[0]  # batch size
-    J = y_pred.shape[1]  # number of classes
-    K = s_pred.shape[1]  # number of (training) domains
+    assert len(s_pred_k) == len(s_pred)
 
-    for k in range(K):
-        #j, k = 0, 0
-        s_true_k = s_true[:, k] # s_pred.shape (B)
-        s_pred_k = s_pred[:, k] # s_pred.shape (B)
-        
-        _eps: float = 1e-7
-        _normal = torch.distributions.Normal(loc=0., scale=1.)
-        _float_type = y_pred.dtype  # creating new tensors (in case of amp)
-        
-        assert len(s_pred_k) == len(s_pred)
-        assert s_true.shape == (B, K)
-        assert s_pred_k.shape == (B, 1)
-        assert s_pred.shape ==  (B, K)
-        assert y_true.shape ==  (B,)
-        assert y_pred.shape == (B, J)
-        assert rho.shape == (K, J+1)
-        assert rho_k.shape == (B, J+1)
-        
-        # matrix of y (probit) differences (with respect to its true outcome)
-        y_pred_diff = torch.zeros(B, J-1, dtype=_float_type, device=self.args.device)
-        # y_pred_diff = torch.zeros(B, J-1, dtype=_float_type, device=args.device) # y_pred_diff.shape
+    # matrix of y(probit) differences (with respect to its true outcome)
+    # y_pred_diff = torch.zeros(B, J-1, dtype=_float_type, device=self.device)
+    y_pred_diff = torch.zeros(B, J-1, dtype=_float_type, device=device)
+    
+    for j in range(J):
+        ## j=0
+        # col_mask = torch.arange(0, J, device=self.device).not_equal(j)
+        col_mask = torch.arange(0, J, device=device).not_equal(j) ## 
+        row_mask = y_true.eq(j)
+        y_pred_diff[row_mask, :] = (y_pred[:, j].view(-1, 1) - y_pred[:, col_mask])[row_mask, :]
+    assert len(rho) == len(y_pred)
+    assert rho.shape[1] == (y_pred.shape[1] + 1)
 
-        for j in range(J):
-            ## j=0
-            col_mask = torch.arange(0, J, device=self.args.device).not_equal(j)
-            row_mask = y_true.eq(j)
-            y_pred_diff[row_mask, :] = (y_pred[:, j].view(-1, 1) - y_pred[:, col_mask])[row_mask, :]
-        '''
-        for j in range(J):
-            ## j=0
-            col_mask = torch.arange(0, J, device=args.device).not_equal(j)
-            row_mask = y_true.eq(j)
-            y_pred_diff[row_mask, :] = (y_pred[:, j].view(-1, 1) - y_pred[:, col_mask])[row_mask, :]
-        '''
-        assert len(rho_k) == len(y_pred)
-        rho.shape
-        assert rho_k.shape[1] == (y_pred.shape[1] + 1)
-        
-        C_tilde_list = list()
-        for i in range(B):
-            # i=0
-            L = torch.eye(J + 1)
-            L = torch.eye(J + 1, device=rho_k.device)  # construct a lower triangular matrix L.shape
-            L[-1] = rho_k[i]                           # fill in params
-            C = MatrixOps.cov_to_corr(L @ L.T)       # (J+1, J+1) == C.shape
-            j = int(y_true[i].item())                # true target index
-            Cy = C[:J, :J].clone()                   # (J, J)  == Cy.shape
-            Cy_diff = MatrixOps.compute_cov_of_error_differences(Cy, j=j)  # (J-1, J-1)
-            C_tilde = torch.empty(J, J, device=rho_k.device)                 # (J, J)
-            C_tilde[:J-1, :J-1] = Cy_diff
-            not_j = torch.arange(0, J, device=rho_k.device).not_equal(j)
-            not_j = not_j.nonzero(as_tuple=True)[0]
-            C_tilde[-1, :-1] = C[-1, j] - C[-1, not_j]                     # (1,  ) - (1, J-1)
-            C_tilde[:-1, -1] = C[j, -1] - C[not_j, -1]                     # ...
-            C_tilde[-1, -1] = C[-1, -1]                                    # equals 1
-            C_tilde = MatrixOps.make_positive_definite(C_tilde)            # not necessary
-            C_tilde_list += [C_tilde]
+    C_tilde_list = list()
+    for i in range(B):
+        L = torch.eye(J + 1, device=rho.device)  # construct a lower triangular matrix
+        L[-1] = rho[i]                           # fill in params
+        C = MatrixOps.cov_to_corr(L @ L.T)       # (J+1, J+1)
+        j: int = y_true[i].item()                # true target index
+        Cy = C[:J, :J].clone()                   # (J, J)
+        Cy_diff = MatrixOps.compute_cov_of_error_differences(Cy, j=j)  # (J-1, J-1)
+        C_tilde = torch.empty(J, J, device=rho.device)                 # (J, J)
+        C_tilde[:J-1, :J-1] = Cy_diff
+        not_j = torch.arange(0, J, device=rho.device).not_equal(j)
+        not_j = not_j.nonzero(as_tuple=True)[0]
+        C_tilde[-1, :-1] = C[-1, j] - C[-1, not_j]                     # (1,  ) - (1, J-1)
+        C_tilde[:-1, -1] = C[j, -1] - C[not_j, -1]                     # ...
+        C_tilde[-1, -1] = C[-1, -1]                                    # equals 1
+        C_tilde = MatrixOps.make_positive_definite(C_tilde)            # not necessary
+        C_tilde_list += [C_tilde]
 
-        # Cholesky decomposition; (B, J, J)
-        L = torch.linalg.cholesky(torch.stack(C_tilde_list, dim=0))
-        L_lower = L - torch.diag_embed(
-            torch.diagonal(L, offset=0, dim1=1, dim2=2),
-            dim1=1, dim2=2
-        )
-        # print(L.shape, L.shape)
-        # print(L_lower.shape, L_lower.shape)
-        
-        # GHK algorithm
-        _probs = torch.ones(B, J, dtype=_float_type, device=self.args.device)
-        # _probs = torch.ones(B, J, dtype=_float_type, device=args.device)
-        v = torch.zeros_like(_probs)
-        for l in range(J):         # 0, 1, ..., J-2, J-1
-            if l < (J - 1):
-                # l=0
-                torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2).shape
-                y_pred_diff.shape
-                lower_trunc = - (  # (B,  )
-                    y_pred_diff[:, l] - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l]
-                ).div(torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l])                    # (B,  )
-                a = - (y_pred_diff[:, l] - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l])
-                b = torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l]
-                a.div(b).shape
-                lower_trunc.shape
+    # Cholesky decomposition; (B, J, J)
+    L = torch.linalg.cholesky(torch.stack(C_tilde_list, dim=0))
+    L_lower = L - torch.diag_embed(
+        torch.diagonal(L, offset=0, dim1=1, dim2=2),
+        dim1=1, dim2=2
+    )
+    print(L.shape, L.shape)
+    print(L_lower.shape, L_lower.shape)
+    
+ 
+    def truncnorm_rvs_recursive(loc, scale, lower_clip, max_iter: int = 10):
+        """Add function docstring."""
+        n: int = len(loc)
+        q = np.random.normal(loc, scale, size=(n, ))
+        mask = (q < lower_clip)  # True if not valid sample of truncated normal
+        if np.any(mask):
+            if max_iter > 0:
+                # recursively sample
+                q[mask] = truncnorm_rvs_recursive(
+                    loc=loc[mask],
+                    scale=scale[mask],
+                    lower_clip=lower_clip[mask],
+                    max_iter=max_iter-1,
+                )
             else:
-                # l=12
-                lower_trunc = - (  # (B,  )
-                    s_pred_k - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l]  # (B,  )
-                ).div(torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l])                    # (B,  )
-                
-                a = - (s_pred_k - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l])
-                a = (s_pred_k.squeeze() - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l])
-                b = torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l]
-                lower_trunc = -a.div(b)
+                q[mask] = lower_clip[mask] + 1e-5
+        return q
 
-            # sample from truncated normal (in batches)
-            lower_trunc_numpy = lower_trunc.detach().cpu().numpy()
-            # lower_trunc_numpy.shape
-            samples = truncnorm_rvs_recursive(
-                loc=np.zeros(B), scale=np.ones(B),
-                lower_clip=lower_trunc_numpy, max_iter=5,
-            )
-
-            v[:, l] = torch.from_numpy(samples).to(self.args.device).flatten()
-            # v[:, l] = torch.from_numpy(samples).to(args.device).flatten()
-            _probs[:, l] = 1. - _normal.cdf(lower_trunc)
-
-        if approximate:
-            # y_probs_all = F.softmax(y_pred, dim=1)
-            # assert y_probs_all.shape == (B, J)
-            y_probs = F.softmax(y_pred, dim=1).gather(dim=1, index=y_true.view(-1, 1).to(int)).flatten()
+    # GHK algorithm
+    # _probs = torch.ones(B, J, dtype=_float_type, device=self.device)
+    _probs = torch.ones(B, J, dtype=_float_type, device=device)
+    v = torch.zeros_like(_probs)
+    for l in range(J):         # 0, 1, ..., J-2, J-1
+        if l < (J - 1):
+            # l=0
+            torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2).shape
+            y_pred_diff.shape
+            lower_trunc = - (  # (B,  )
+                y_pred_diff[:, l] - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l]
+            ).div(torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l])                    # (B,  )
+            a = - (y_pred_diff[:, l] - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l])
+            b = torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l]
+            a.div(b).shape
+            lower_trunc.shape
         else:
-            y_probs = torch.prod(_probs[:, :-1], dim=1).flatten()
+            # l=12
+            lower_trunc = - (  # (B,  )
+                s_pred_k - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l]  # (B,  )
+            ).div(torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l])                    # (B,  )
+            
+            a = - (s_pred_k - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l])
+            a = (s_pred_k.squeeze() - torch.bmm(L_lower, v.clone().unsqueeze(2)).squeeze(2)[:, l])
+            b = torch.diagonal(L, offset=0, dim1=1, dim2=2)[:, l]
+            lower_trunc = -a.div(b)
 
-        # Pr[Y = j, S_k = 1 | X]
-        y_s_joint_probs = y_probs * _probs[:, -1].flatten()  # the last column of `_probs` gives Pr[S_k = 1 | Y = j, X]
-        loss_selected = - torch.log(y_s_joint_probs + _eps)
-
-        # Pr[S_l = 0 | X], for l \neq k
-        s_true_2d = torch.zeros_like(s_pred).scatter_(
-            dim=1, index=s_index.view(-1, 1).to(int), src=torch.ones_like(s_pred),
+        # TODO: by far this is the fastest implementation, but can we do better?
+        # sample from truncated normal (in batches)
+        lower_trunc_numpy = lower_trunc.detach().cpu().numpy()
+        # lower_trunc_numpy.shape
+        samples = truncnorm_rvs_recursive(
+            loc=np.zeros(B), scale=np.ones(B),
+            lower_clip=lower_trunc_numpy, max_iter=5,
         )
-        
-        loss_not_selected = - torch.log(1. - _normal.cdf(s_pred) + _eps)
-        loss_not_selected = torch.nan_to_num(loss_not_selected, nan=0., posinf=0., neginf=0.,)
-        loss_not_selected = loss_not_selected.masked_select((1 - s_true_2d).bool())  # s_true_2d = 0
+   
+        # v[:, l] = torch.from_numpy(samples).to(self.device).flatten()
+        v[:, l] = torch.from_numpy(samples).to(device).flatten()
+        _probs[:, l] = 1. - _normal.cdf(lower_trunc)
+
+    if approximate:
+        y_probs = F.softmax(y_pred, dim=1).gather(dim=1, index=y_true.view(-1, 1)).flatten()
+    else:
+        y_probs = torch.prod(_probs[:, :-1], dim=1).flatten()
+
+    # Pr[Y = j, S_k = 1 | X]
+    y_s_joint_probs = y_probs * _probs[:, -1].flatten()  # the last column of `_probs` gives Pr[S_k = 1 | Y = j, X]
+    loss_selected = - torch.log(y_s_joint_probs + _eps)
+
+    # Pr[S_l = 0 | X], for l \neq k
+    s_true_2d = torch.zeros_like(s_pred).scatter_(
+        dim=1, index=s_true.view(-1, 1), src=torch.ones_like(s_pred),
+    )
+    loss_not_selected = - torch.log(1. - _normal.cdf(s_pred) + _eps)
+    loss_not_selected = torch.nan_to_num(loss_not_selected, nan=0., posinf=0., neginf=0.,)
+    loss_not_selected = loss_not_selected.masked_select((1 - s_true_2d).bool())  # s_true_2d = 0
 
     return torch.cat([loss_selected, loss_not_selected], dim=0).mean(), loss_selected.mean(), loss_not_selected.mean()
 

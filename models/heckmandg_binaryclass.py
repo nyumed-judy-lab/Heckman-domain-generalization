@@ -68,6 +68,65 @@ def loss_binary_classification(self,
         loss += -((1 - s[:, k]) * safe_log(normal.cdf(-batch_probits_g[:, k]))).mean() # equation (22) - 3
     return loss    
 
+
+def _cross_domain_binary_classification_loss(self,
+                                                y_pred: torch.FloatTensor,
+                                                y_true: torch.LongTensor,
+                                                s_pred: torch.FloatTensor,
+                                                s_true: torch.LongTensor,
+                                                rho   : torch.FloatTensor, ) -> torch.FloatTensor:
+    # This loss function (was used in ICLR paper) doesn't work in ood validation.
+    """
+    Arguments:
+        y_pred : 1d `torch.FloatTensor` of shape (N,  ); in probits.
+        y_true : 1d `torch.LongTensor`  of shape (N,  ); with values in {0, 1}.
+        s_pred : 2d `torch.FloatTensor` of shape (B, K); in probits.
+        s_true : 1d `torch.LongTensor`  of shape (N,  ); with values in [0, K-1].
+        rho    : 1d `torch.FloatTensor` of shape (N,  ); with values in [-1, 1].
+    Returns:
+        ...
+    """
+
+    _epsilon: float = 1e-7
+    _normal = torch.distributions.Normal(loc=0., scale=1.)
+
+    # Gather from `s_pred` values with indices that correspond to the true domains
+    s_pred_k = s_pred.gather(dim=1, index=s_true.view(-1, 1)).squeeze()  # (N,  )
+
+    # - log Pr[S_k = 1, Y = 1]; shape = (N,  )
+    loss_selected_pos = - y_true.float() * torch.log(
+        self._bivariate_normal_cdf(a=s_pred_k, b=y_pred, rho=rho) + _epsilon,
+    )
+    loss_selected_pos = torch.nan_to_num(loss_selected_pos, nan=0., posinf=0., neginf=0.)
+    loss_selected_pos = loss_selected_pos[y_true.bool()]
+
+    # - log Pr[S_k = 1, Y = 0]; shape = (N,  )
+    loss_selected_neg = - (1 - y_true.float()) * torch.log(
+        _normal.cdf(s_pred_k) - self._bivariate_normal_cdf(a=s_pred_k, b=y_pred, rho=rho) + _epsilon
+    )
+    loss_selected_neg = torch.nan_to_num(loss_selected_neg, nan=0., posinf=0., neginf=0.)
+    loss_selected_neg = loss_selected_neg[(1 - y_true).bool()]
+
+    loss_selected = torch.cat([loss_selected_pos, loss_selected_neg], dim=0)
+
+    # Create a 2d indicator for `s_true`
+    #   Shape; (N, K)
+    s_true_2d = torch.zeros_like(s_pred).scatter_(
+        dim=1, index=s_true.view(-1, 1), src=torch.ones_like(s_pred)
+    )
+
+    # -\log Pr[S_l = 0] for l \neq k
+    loss_not_selected = - torch.log(1 - _normal.cdf(s_pred) + _epsilon)     # (N, K)
+    loss_not_selected = torch.nan_to_num(loss_not_selected, nan=0., posinf=0., neginf=0.)  # (N, K)
+    loss_not_selected = loss_not_selected.masked_select((1 - s_true_2d).bool())            # (NK - N,  )
+    
+    return torch.cat([loss_selected, loss_not_selected], dim=0).mean(), loss_selected.mean(), loss_not_selected.mean()
+
+    # total_count: int = loss_selected.numel() + loss_not_selected.numel()
+    # sel_weight: float = total_count / len(loss_selected)
+    # not_sel_weight: float = total_count / len(loss_not_selected)
+    # return torch.cat([loss_selected * sel_weight, loss_not_selected * not_sel_weight], dim=0).mean()
+
 class HeckmanDG_CNN_BinaryClassifier:
     def __init__(self, args,
                  network, 

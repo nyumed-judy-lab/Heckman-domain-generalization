@@ -69,7 +69,67 @@ def loss_regression(self,
         if False:
             loss += (loss_not_selected + s_true * (probit_loss + regression_loss)).mean()
         return loss
-    
+
+def _cross_domain_regression_loss(self,
+                                    y_pred: torch.FloatTensor,
+                                    y_true: torch.FloatTensor,
+                                    s_pred: torch.FloatTensor,
+                                    s_true: torch.LongTensor,
+                                    rho   : torch.FloatTensor,
+                                    sigma : torch.FloatTensor, ) -> torch.FloatTensor:
+    # This loss function (was used in ICLR paper) doesn't work in ood validation.
+    """
+    Arguments:
+        y_pred : 1d `torch.FloatTensor` of shape (N,  ),
+        y_true : 1d `torch.FloatTensor` of shape (N,  ),
+        s_pred : 2d `torch.FloatTensor` of shape (N, K),
+        s_true : 1d `torch.LongTensor`  of shape (N,  ),
+        rho    : 1d `torch.FloatTensor` of shape (N,  ),
+        sigma  : 1d `torch.FloatTensor` of shape (1,  ), singleton.
+    """
+
+    if (y_pred.ndim == 2) and (y_pred.size(1) == 1):
+        y_pred = y_pred.squeeze(1)
+    if (y_true.ndim == 2) and (y_true.size(1) == 1):
+        y_true = y_true.squeeze(1)
+
+    _epsilon: float = 1e-7
+    _normal = torch.distributions.Normal(loc=0., scale=1.)
+
+    # Gather values from `s_pred` those that correspond to the true domains
+    s_pred_k = s_pred.gather(dim=1, index=s_true.view(-1, 1)).squeeze()
+    # s_pred B, K s_true_k s_pred_k (B,) 
+
+    # -\log p[S_k = 1, y] = -\log p(y) -\log p(S_k = 1 | y) ; shape = (N,  )
+    loss_selected = - torch.log(
+        _normal.cdf(
+            (s_pred_k + rho * (y_true - y_pred).div(_epsilon + sigma)) / (_epsilon + torch.sqrt(1 - rho ** 2))
+        ) + _epsilon
+    ) + 0.5 * (
+        torch.log(2 * torch.pi * (sigma ** 2)) \
+            + F.mse_loss(y_pred, y_true, reduction='none').div(_epsilon + sigma ** 2)
+    )
+
+    if (self.args.freeze_selection_encoder & self.args.freeze_selection_head):
+        return loss_selected.mean()
+
+    # domain indicators in 2d; (N, K) <- (N,  )
+    s_true_2d = torch.zeros_like(s_pred).scatter_(
+        dim=1,
+        index=s_true.view(-1, 1),
+        src=torch.ones_like(s_pred),
+    )
+
+    # -\log Pr[S_l = 0] for l \neq k
+    #   shape; (N(K-1),  )
+    loss_not_selected = - torch.log(1 - _normal.cdf(s_pred) + _epsilon)                    # (N     , K)
+    loss_not_selected = torch.nan_to_num(loss_not_selected, nan=0., posinf=0., neginf=0.)  # (N     , K)
+    loss_not_selected = loss_not_selected.masked_select((1 - s_true_2d).bool())            # (N(K-1),  )
+
+    return torch.cat([loss_selected, loss_not_selected], dim=0).mean(), loss_selected.mean(), loss_not_selected.mean()
+
+
+
 class HeckmanDG_CNN_Regressor:
     def __init__(self, 
                  args,
