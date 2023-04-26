@@ -722,7 +722,7 @@ class HeckmanDG_CNN_MultiClassifier:
         
         # Traj Loss & Metric: Training
         self.train_loss_traj = train_loss_traj
-        self.train_auc_traj = train_auc_traj
+        self.train_acc_traj = train_acc_traj
         self.train_f1_traj = train_f1_traj
         # Traj Loss & Metric: ID validation
         self.id_valid_loss_traj = id_valid_loss_traj
