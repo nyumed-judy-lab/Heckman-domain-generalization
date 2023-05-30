@@ -224,7 +224,7 @@ The model is trained on the training data using the ```fit``` function performin
  3. Checks if the current validation loss is lower than the best validation loss seen so far. If so, it saves the current state of the network as the best model. 
  4. The ```fit()``` returns the best model. The final trained model object is saved in [results](./results/).
 
-#### **3.1.3. Model selection ** 
+#### **3.1.3. Model selection** 
 
 In the HeckmanDG on image data, we seperately select the best parameters of selection model (g) and outcome model (f). The selection model is selected by
 data-specific evaluation metric (user can select the metric among accuracy or f1 score) and the outcome model is selected by task-specific evalauation metric (user cfan select the user can select the metric among accuracy or f1 score in the classification and mse, mae, or pearson coefficient in the regression task. All metrics are aleady set by recommended evaluation metric in ICLR paper, and user can select in [args.model_selection_metric]. After the model selection, we combine the f and g networks as one model.
